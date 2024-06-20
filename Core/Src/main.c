@@ -50,7 +50,7 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+SA818_HandleTypeDef hsa818;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -152,6 +152,22 @@ int main(void)
   SSD1306_Init();
   SSD1306_ClearScreen();
   while(SSD1306_IsReady() == 0);
+
+  SA818_Init(&hsa818, &huart1);
+
+  if (SA818_Begin(&hsa818) != 0) {
+  	// Обработка ошибки начала работы
+  	Error_Handler();
+  }
+
+  // Установка конфигурации трансивера
+  SA818_SetConfig(&hsa818, SA_BANDWIDTH_12_5KHZ, "TXFILT", "RXFILT", SA_CTCSS_OFF, SA_CTCSS_OFF, SA_SQUELCH_OFF);
+
+  // Установка громкости
+  SA818_SetVolume(&hsa818, SA_VOLUME_DEFAULT);
+
+  // Включение/настройка фильтров
+  SA818_SetFilters(&hsa818, SA_FILTER_ON, SA_FILTER_ON, SA_FILTER_ON);
 
 
 

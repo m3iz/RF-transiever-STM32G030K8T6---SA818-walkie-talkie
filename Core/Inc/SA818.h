@@ -57,10 +57,7 @@ typedef struct {
     uint16_t GPIO_Pin_AMP;
 } SA818_HandleTypeDef;
 
-void SA818_Init(SA818_HandleTypeDef *sa818, UART_HandleTypeDef *huart, GPIO_TypeDef* GPIOx_PTT, uint16_t GPIO_Pin_PTT,
-                GPIO_TypeDef* GPIOx_PD, uint16_t GPIO_Pin_PD,
-                GPIO_TypeDef* GPIOx_HL, uint16_t GPIO_Pin_HL,
-                GPIO_TypeDef* GPIOx_AMP, uint16_t GPIO_Pin_AMP);
+void SA818_Init(SA818_HandleTypeDef *sa818, UART_HandleTypeDef *huart);
 
 uint8_t SA818_ReadSerialTimeout(SA818_HandleTypeDef *sa818);
 uint8_t SA818_Begin(SA818_HandleTypeDef *sa818);
