@@ -20,6 +20,14 @@
 void SA818_Init(SA818_HandleTypeDef *sa818, UART_HandleTypeDef *huart)
 {
     sa818->huart = huart;
+
+
+    HAL_GPIO_WritePin(sa818->GPIOx_PTT, sa818->GPIO_Pin_PTT, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(sa818->GPIOx_PD, sa818->GPIO_Pin_PD, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(sa818->GPIOx_HL, sa818->GPIO_Pin_HL, GPIO_PIN_RESET);
+    if (sa818->GPIOx_AMP) {
+        HAL_GPIO_WritePin(sa818->GPIOx_AMP, sa818->GPIO_Pin_AMP, GPIO_PIN_RESET);
+    }
 }
 
 uint8_t SA818_ReadSerialTimeout(SA818_HandleTypeDef *sa818)
