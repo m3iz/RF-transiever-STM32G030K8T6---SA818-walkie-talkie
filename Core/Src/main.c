@@ -97,17 +97,15 @@ void Eeprom_Init() {
 
 }
 
-void HAL_GPIO_EXTI5_Callback(uint16_t GPIO_Pin)
-{
+void EXTI4_15_IRQHandler(void) {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5); // Обработка прерывания на PB5
+}
 
-  if(GPIO_Pin == GPIO_PIN_5) {
+void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
+    if (GPIO_Pin == GPIO_PIN_5) {
+    	SSD1306_ClearScreen();
 
-
-  } else{
-
-    __NOP();
-
-  }
+    }
 }
 
 /* USER CODE END 0 */
