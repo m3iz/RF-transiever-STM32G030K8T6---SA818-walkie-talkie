@@ -36,6 +36,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define SSD1306_USE_I2C
+
+char buf[1024];
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,8 +71,8 @@ static void MX_USART1_UART_Init(void);
 
 // Settings for SA818
 
-float rxFreq = 0;
-float txFreq = 0;
+int rxFreq = 0;
+int txFreq = 0;
 
 uint8_t mode = 0; // 0 - standart mode; 1 - rx Freq configuration; 2 - tx Freq configuration
 
@@ -80,16 +82,16 @@ int32_t prevCounter = 0;
 void Eeprom_Init() {
     //const char wmsg[] = "Some data";
     //char rmsg[sizeof(wmsg)];
-	uint16_t wmsg[16];
+	uint16_t wmsg[2];
 	uint16_t rmsg[sizeof(wmsg)];
-	memset(wmsg, 0, sizeof(wmsg)/2);
+	memset(wmsg, 0, sizeof(wmsg));
     // HAL expects address to be shifted one bit to the left
     uint16_t devAddr = (0x50 << 1);
     uint16_t memAddr = 0x0100;
     HAL_StatusTypeDef status;
 
-    HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
-        (uint8_t*)wmsg, sizeof(wmsg), HAL_MAX_DELAY);
+    //HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
+    //   (uint8_t*)wmsg, sizeof(wmsg), HAL_MAX_DELAY);
 
     for(;;) {
         status = HAL_I2C_IsDeviceReady(&hi2c1, devAddr, 1,
@@ -100,15 +102,59 @@ void Eeprom_Init() {
 
     HAL_I2C_Mem_Read(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
         (uint8_t*)rmsg, sizeof(rmsg), HAL_MAX_DELAY);
-
+    rxFreq = rmsg[0];
+    txFreq = rmsg[1];
 
 }
 
+void Eeprom_Write(){
+
+		uint16_t wmsg[2];
+		wmsg[0] = rxFreq;
+		wmsg[1] = txFreq;
+
+	    uint16_t devAddr = (0x50 << 1);
+	    uint16_t memAddr = 0x0100;
+	    HAL_StatusTypeDef status;
+
+	    HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
+	        (uint8_t*)wmsg, sizeof(wmsg), HAL_MAX_DELAY);
+
+	    for(;;) {
+	        status = HAL_I2C_IsDeviceReady(&hi2c1, devAddr, 1,
+	                                       HAL_MAX_DELAY);
+	        if(status == HAL_OK)
+	            break;
+	    }
+}
 
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_5) {
-    	//SSD1306_ClearScreen();
 
+    	//SSD1306_ClearScreen();
+    	mode++;
+    	Eeprom_Write();
+    	if(mode==4)mode=0;
+    	ssd1306_Fill(Black);
+    	ssd1306_SetCursor(0, 0);
+    	if(mode==1)
+    		sprintf(buf, "* RxFrequency = %d", rxFreq);
+    	else
+    		sprintf(buf, "  RxFrequency = %d", rxFreq);
+    	ssd1306_WriteString(buf, Font_7x10, White);
+    	ssd1306_SetCursor(0, 20);
+    	if(mode==2)
+    		sprintf(buf, "* TxFrequency = %d", txFreq);
+    	else
+    		sprintf(buf, "  TxFrequency = %d", txFreq);
+    	ssd1306_WriteString(buf, Font_7x10, White);
+    	ssd1306_SetCursor(0, 40);
+    	if(mode==3)
+    		sprintf(buf, "* Mode = %d", mode);
+    	else
+    		sprintf(buf, "  Mode = %d", mode);
+    	ssd1306_WriteString(buf, Font_7x10, White);
+    	ssd1306_UpdateScreen();
     }
 }
 
@@ -151,10 +197,28 @@ int main(void)
   Eeprom_Init();
   ssd1306_Init();
   //ssd1306_Fill(Black);
+
+  ssd1306_Fill(Black);
   ssd1306_SetCursor(0, 0);
-  ssd1306_WriteString("Font 7x10", Font_7x10, White);
+  if(mode==1)
+	  sprintf(buf, "* RxFrequency = %d", rxFreq);
+  else
+      sprintf(buf, "  RxFrequency = %d", rxFreq);
+  ssd1306_WriteString(buf, Font_7x10, White);
+  ssd1306_SetCursor(0, 20);
+  if(mode==2)
+      sprintf(buf, "* TxFrequency = %d", txFreq);
+  else
+      sprintf(buf, "  TxFrequency = %d", txFreq);
+  ssd1306_WriteString(buf, Font_7x10, White);
+  ssd1306_SetCursor(0, 40);
+  if(mode==3)
+      sprintf(buf, "* Mode = %d", mode);
+  else
+      sprintf(buf, "  Mode = %d", mode);
+  ssd1306_WriteString(buf, Font_7x10, White);
   ssd1306_UpdateScreen();
-  ;
+
   /*SSD1306_Init();
   SSD1306_ClearScreen();
   while(SSD1306_IsReady() == 0);
@@ -168,7 +232,7 @@ int main(void)
   	  	        		      }
 
 */
-  int pos = 0;
+
   SA818_Init(&hsa818, &huart1);
 
     if (SA818_Begin(&hsa818) == 0) {
@@ -198,28 +262,35 @@ int main(void)
 	  	      if(currCounter != prevCounter) {
 	  	          int32_t delta = currCounter-prevCounter;
 	  	          prevCounter = currCounter;
-	  	          // защита от дребезга контактов и переполнения счетчика
-	  	          // (переполнение будет случаться очень редко)
+
 	  	          if((delta > -10) && (delta < 10)) {
-	  	              // здесь обрабатываем поворот энкодера на delta щелчков
-	  	              // delta положительная или отрицательная в зависимости
-	  	              // от направления вращения
-	  	        	 pos += delta;
-	  	        	 if(pos<0)pos=0;
-	  	        	 //SSD1306_ClearScreen();
-	  	        	 for (uint8_t  i = 0; i < pos; i++)
-	  	        		      {
-	  	        		        //SSD1306_DrawFilledRect(i * 16, i * 16 + 8, 16, 48);
-	  	        		        //SSD1306_UpdateScreen();
-	  	        		        //while(SSD1306_IsReady() == 0);
 
-	  	        		        //HAL_Delay(25);
-	  	        		      }
-
-	  	        		      //SSD1306_ClearScreen();
-	  	        		      //while(SSD1306_IsReady() == 0);
-
-	  	              // ...
+	  	        	ssd1306_Fill(Black);
+	  	        	ssd1306_SetCursor(0, 0);
+	  	        	if(mode==1){
+	  	        		  rxFreq += delta;
+	  	        		  if(rxFreq<0)rxFreq = 0;
+	  	        		  sprintf(buf, "* RxFrequency = %d", rxFreq);
+	  	        	}
+	  	        	  else
+	  	        	      sprintf(buf, "  RxFrequency = %d", rxFreq);
+	  	        	  ssd1306_WriteString(buf, Font_7x10, White);
+	  	        	  ssd1306_SetCursor(0, 20);
+	  	        	  if(mode==2){
+	  	        		  txFreq += delta;
+	  	        		  if(txFreq<0)txFreq = 0;
+	  	        	      sprintf(buf, "* TxFrequency = %d", txFreq);
+	  	        	  }
+	  	        	  else
+	  	        	      sprintf(buf, "  TxFrequency = %d", txFreq);
+	  	        	  ssd1306_WriteString(buf, Font_7x10, White);
+	  	        	  ssd1306_SetCursor(0, 40);
+	  	        	  if(mode==3)
+	  	        	      sprintf(buf, "* Mode = %d", mode);
+	  	        	  else
+	  	        	      sprintf(buf, "  Mode = %d", mode);
+	  	        	  ssd1306_WriteString(buf, Font_7x10, White);
+	  	        	  ssd1306_UpdateScreen();
 	  	          }
 	  	      }
 
