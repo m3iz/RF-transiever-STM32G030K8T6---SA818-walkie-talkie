@@ -22,9 +22,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ssd1306.h"
+#include "fonts.h"
 #include "SA818.h"
 #include <string.h>
-
+#define SSD1306_INCLUDE_FONT_7x10
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,6 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define SSD1306_USE_I2C
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,7 +45,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
-I2C_HandleTypeDef hi2c2;
 
 TIM_HandleTypeDef htim1;
 
@@ -59,13 +60,19 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
-static void MX_I2C2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// Settings for SA818
+
+float rxFreq = 0;
+float txFreq = 0;
+
+uint8_t mode = 0; // 0 - standart mode; 1 - rx Freq configuration; 2 - tx Freq configuration
 
 int32_t prevCounter = 0;
 
@@ -97,13 +104,10 @@ void Eeprom_Init() {
 
 }
 
-void EXTI4_15_IRQHandler(void) {
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5); // Обработка прерывания на PB5
-}
 
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_5) {
-    	SSD1306_ClearScreen();
+    	//SSD1306_ClearScreen();
 
     }
 }
@@ -141,13 +145,17 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_USART1_UART_Init();
-  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
   Eeprom_Init();
-
-  SSD1306_Init();
+  ssd1306_Init();
+  //ssd1306_Fill(Black);
+  ssd1306_SetCursor(0, 0);
+  ssd1306_WriteString("Font 7x10", Font_7x10, White);
+  ssd1306_UpdateScreen();
+  ;
+  /*SSD1306_Init();
   SSD1306_ClearScreen();
   while(SSD1306_IsReady() == 0);
   for (uint8_t  i = 0; i < 8; i++)
@@ -159,7 +167,7 @@ int main(void)
   	  	        		        //HAL_Delay(25);
   	  	        		      }
 
-
+*/
   int pos = 0;
   SA818_Init(&hsa818, &huart1);
 
@@ -169,7 +177,7 @@ int main(void)
     }
 
     // Установка конфигурации трансивера
-      SA818_SetConfig(&hsa818, SA_BANDWIDTH_12_5KHZ, "150.3500", "170.3500", SA_CTCSS_OFF, SA_CTCSS_OFF, SA_SQUELCH_OFF);
+      SA818_SetConfig(&hsa818, SA_BANDWIDTH_12_5KHZ, txFreq, rxFreq, SA_CTCSS_OFF, SA_CTCSS_OFF, SA_SQUELCH_OFF);
 
     // Установка громкости
     SA818_SetVolume(&hsa818, SA_VOLUME_DEFAULT);
@@ -185,10 +193,6 @@ int main(void)
 	  int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
 	  	      currCounter = 32767 - ((currCounter-1) & 0xFFFF) / 2;
 	  	      if(currCounter > 32768/2) {
-	  	          // Преобразуем значения счетчика из:
-	  	          //  ... 32766, 32767, 0, 1, 2 ...
-	  	          // в значения:
-	  	          //  ... -2, -1, 0, 1, 2 ...
 	  	          currCounter = currCounter - 32768;
 	  	      }
 	  	      if(currCounter != prevCounter) {
@@ -202,18 +206,18 @@ int main(void)
 	  	              // от направления вращения
 	  	        	 pos += delta;
 	  	        	 if(pos<0)pos=0;
-	  	        	 SSD1306_ClearScreen();
+	  	        	 //SSD1306_ClearScreen();
 	  	        	 for (uint8_t  i = 0; i < pos; i++)
 	  	        		      {
-	  	        		        SSD1306_DrawFilledRect(i * 16, i * 16 + 8, 16, 48);
-	  	        		        SSD1306_UpdateScreen();
-	  	        		        while(SSD1306_IsReady() == 0);
+	  	        		        //SSD1306_DrawFilledRect(i * 16, i * 16 + 8, 16, 48);
+	  	        		        //SSD1306_UpdateScreen();
+	  	        		        //while(SSD1306_IsReady() == 0);
 
 	  	        		        //HAL_Delay(25);
 	  	        		      }
 
 	  	        		      //SSD1306_ClearScreen();
-	  	        		      while(SSD1306_IsReady() == 0);
+	  	        		      //while(SSD1306_IsReady() == 0);
 
 	  	              // ...
 	  	          }
@@ -312,54 +316,6 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
-
-}
-
-/**
-  * @brief I2C2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C2_Init(void)
-{
-
-  /* USER CODE BEGIN I2C2_Init 0 */
-
-  /* USER CODE END I2C2_Init 0 */
-
-  /* USER CODE BEGIN I2C2_Init 1 */
-
-  /* USER CODE END I2C2_Init 1 */
-  hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x00303D5B;
-  hi2c2.Init.OwnAddress1 = 0;
-  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c2.Init.OwnAddress2 = 0;
-  hi2c2.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c2, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c2, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C2_Init 2 */
-
-  /* USER CODE END I2C2_Init 2 */
 
 }
 

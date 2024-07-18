@@ -62,7 +62,7 @@ void SA818_Init(SA818_HandleTypeDef *sa818, UART_HandleTypeDef *huart);
 uint8_t SA818_ReadSerialTimeout(SA818_HandleTypeDef *sa818);
 uint8_t SA818_Begin(SA818_HandleTypeDef *sa818);
 uint8_t SA818_SetPower(SA818_HandleTypeDef *sa818, uint8_t is_high);
-uint8_t SA818_SetConfig(SA818_HandleTypeDef *sa818, uint8_t bw, char* tx_f, char* rx_f, char* tx_ctcss, char* rx_ctcss, uint8_t squelch);
+uint8_t SA818_SetConfig(SA818_HandleTypeDef *sa818, uint8_t bw, float tx_f, float rx_f, char* tx_ctcss, char* rx_ctcss, uint8_t squelch);
 uint8_t SA818_SetVolume(SA818_HandleTypeDef *sa818, uint8_t volume);
 uint8_t SA818_SetFilters(SA818_HandleTypeDef *sa818, uint8_t preemph, uint8_t highpass, uint8_t lowpass);
 void SA818_PowerDown(SA818_HandleTypeDef *sa818, uint8_t powerdown);

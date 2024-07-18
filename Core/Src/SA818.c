@@ -62,11 +62,11 @@ uint8_t SA818_Begin(SA818_HandleTypeDef *sa818)
     return 0;
 }
 
-uint8_t SA818_SetConfig(SA818_HandleTypeDef *sa818, uint8_t bw, char* tx_f, char* rx_f, char* tx_ctcss, char* rx_ctcss, uint8_t squelch)
+uint8_t SA818_SetConfig(SA818_HandleTypeDef *sa818, uint8_t bw, float tx_f, float rx_f, char* tx_ctcss, char* rx_ctcss, uint8_t squelch)
 {
     for (uint8_t r = 0; r < 5; r++) {
         char cmd[50];
-        snprintf(cmd, sizeof(cmd), "AT+DMOSETGROUP=%d,%s,%s,%s,%d,%s\r\n", bw, tx_f, rx_f, tx_ctcss, squelch, rx_ctcss);
+        snprintf(cmd, sizeof(cmd), "AT+DMOSETGROUP=%d,%d,%d,%s,%d,%s\r\n", bw, tx_f, rx_f, tx_ctcss, squelch, rx_ctcss);
         HAL_UART_Transmit(sa818->huart, (uint8_t *)cmd, strlen(cmd), HAL_MAX_DELAY);
         if (SA818_ReadSerialTimeout(sa818)) {
             return 1;
