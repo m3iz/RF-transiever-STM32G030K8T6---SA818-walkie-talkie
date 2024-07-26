@@ -37,7 +37,7 @@ uint8_t SA818_ReadSerialTimeout(SA818_HandleTypeDef *sa818)
     uint8_t rx_buffer[1];
 
     while (HAL_GetTick() - timeout < 500) {
-        HAL_Delay(100);
+        //HAL_Delay(100);
         while (HAL_UART_Receive(sa818->huart, rx_buffer, 1, 10) == HAL_OK) {
             readed = 1;
         }
@@ -64,14 +64,17 @@ uint8_t SA818_Begin(SA818_HandleTypeDef *sa818)
 
 uint8_t SA818_SetConfig(SA818_HandleTypeDef *sa818, uint8_t bw, float tx_f, float rx_f, char* tx_ctcss, char* rx_ctcss, uint8_t squelch)
 {
-    for (uint8_t r = 0; r < 5; r++) {
+    /*for (uint8_t r = 0; r < 5; r++) {
         char cmd[50];
-        snprintf(cmd, sizeof(cmd), "AT+DMOSETGROUP=%d,%d,%d,%s,%d,%s\r\n", bw, tx_f, rx_f, tx_ctcss, squelch, rx_ctcss);
+        snprintf(cmd, sizeof(cmd), "AT+DMOSETGROUP=%d,%d,%d,%s,%d,%s\r\n", bw, 175, 175, tx_ctcss, squelch, rx_ctcss);
         HAL_UART_Transmit(sa818->huart, (uint8_t *)cmd, strlen(cmd), HAL_MAX_DELAY);
         if (SA818_ReadSerialTimeout(sa818)) {
             return 1;
         }
-    }
+    }*/
+	uint8_t str[] = "AT+DMOSETGROUP=0,170.0000,150.0000,0000,4,0000\r\n";//передача приём
+		HAL_UART_Transmit(sa818->huart, str, strlen(str), 300);
+
     return 0;
 }
 

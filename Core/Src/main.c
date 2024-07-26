@@ -38,6 +38,7 @@
 #define SSD1306_USE_I2C
 
 char buf[1024];
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,6 +50,8 @@ char buf[1024];
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim14;
+TIM_HandleTypeDef htim16;
 
 UART_HandleTypeDef huart1;
 
@@ -62,6 +65,8 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM14_Init(void);
+static void MX_TIM16_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -73,7 +78,7 @@ static void MX_USART1_UART_Init(void);
 
 int rxFreq = 0;
 int txFreq = 0;
-
+int counter = 0;
 uint8_t mode = 0; // 0 - standart mode; 1 - rx Freq configuration; 2 - tx Freq configuration
 
 int32_t prevCounter = 0;
@@ -128,12 +133,73 @@ void Eeprom_Write(){
 	    }
 }
 
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	 if (htim->Instance == TIM16) {
+		 HAL_GPIO_TogglePin(Audio_Tx_GPIO_Port, Audio_Tx_Pin);
+	 }
+    if (htim->Instance == TIM14) {
+    	if(counter==10)counter=0;
+    	if(counter==0){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,145.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    		HAL_TIM_Base_Start_IT(&htim16);
+    	}
+    	else if(counter==1){
+    		HAL_TIM_Base_Stop_IT(&htim16);
+    		uint8_t str[] = "AT+DMOSETGROUP=0,148.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	}
+    	else if(counter==2){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,151.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==3){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,154.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==4){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,157.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==5){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,160.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==6){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,163.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==7){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,166.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==8){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,169.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==9){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,172.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+
+    	counter++;
+    	ssd1306_Fill(Black);
+    	ssd1306_SetCursor(0, 0);
+    	sprintf(buf, "%d", counter);
+    	ssd1306_WriteString(buf, Font_7x10, White);
+    	ssd1306_UpdateScreen();
+        // Ваш код здесь, который выполняется раз в секунду
+    }
+}
+
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_5) {
 
     	//SSD1306_ClearScreen();
     	mode++;
     	Eeprom_Write();
+    	//SA818_SetConfig(&hsa818, SA_BANDWIDTH_12_5KHZ, txFreq, rxFreq, SA_CTCSS_OFF, SA_CTCSS_OFF, SA_SQUELCH_OFF);
     	if(mode==4)mode=0;
     	ssd1306_Fill(Black);
     	ssd1306_SetCursor(0, 0);
@@ -191,6 +257,8 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_USART1_UART_Init();
+  MX_TIM14_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
@@ -248,12 +316,14 @@ int main(void)
 
     // Включение/настройка фильтров
     //SA818_SetFilters(&hsa818, SA_FILTER_ON, SA_FILTER_ON, SA_FILTER_ON);
+    HAL_TIM_Base_Start_IT(&htim14);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
 	  int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
 	  	      currCounter = 32767 - ((currCounter-1) & 0xFFFF) / 2;
 	  	      if(currCounter > 32768/2) {
@@ -442,6 +512,69 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM14_Init(void)
+{
+
+  /* USER CODE BEGIN TIM14_Init 0 */
+
+  /* USER CODE END TIM14_Init 0 */
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 160-1;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 65535;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
+
+}
+
+/**
+  * @brief TIM16 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM16_Init(void)
+{
+
+  /* USER CODE BEGIN TIM16_Init 0 */
+
+  /* USER CODE END TIM16_Init 0 */
+
+  /* USER CODE BEGIN TIM16_Init 1 */
+
+  /* USER CODE END TIM16_Init 1 */
+  htim16.Instance = TIM16;
+  htim16.Init.Prescaler = 9;
+  htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim16.Init.Period = 1000-1;
+  htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim16.Init.RepetitionCounter = 0;
+  htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim16) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM16_Init 2 */
+
+  /* USER CODE END TIM16_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -508,7 +641,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LCD_GPIO_Port, LCD_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(WP_GPIO_Port, WP_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Audio_Tx_Pin|WP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LCD_Pin */
   GPIO_InitStruct.Pin = LCD_Pin;
@@ -517,12 +650,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LCD_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : WP_Pin */
-  GPIO_InitStruct.Pin = WP_Pin;
+  /*Configure GPIO pins : Audio_Tx_Pin WP_Pin */
+  GPIO_InitStruct.Pin = Audio_Tx_Pin|WP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(WP_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SW_Pin */
   GPIO_InitStruct.Pin = SW_Pin;
