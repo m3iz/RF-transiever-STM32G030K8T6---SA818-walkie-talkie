@@ -195,7 +195,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_5) {
-
+    	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
     	//SSD1306_ClearScreen();
     	mode++;
     	Eeprom_Write();
@@ -641,7 +641,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LCD_GPIO_Port, LCD_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Audio_Tx_Pin|WP_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Audio_Tx_Pin|LED_Pin|WP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LCD_Pin */
   GPIO_InitStruct.Pin = LCD_Pin;
@@ -650,8 +650,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LCD_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Audio_Tx_Pin WP_Pin */
-  GPIO_InitStruct.Pin = Audio_Tx_Pin|WP_Pin;
+  /*Configure GPIO pin : Audio_Rx_Pin */
+  GPIO_InitStruct.Pin = Audio_Rx_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Audio_Rx_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Audio_Tx_Pin LED_Pin WP_Pin */
+  GPIO_InitStruct.Pin = Audio_Tx_Pin|LED_Pin|WP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
