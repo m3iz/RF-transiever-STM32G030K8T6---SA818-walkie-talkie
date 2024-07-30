@@ -59,11 +59,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define LCD_Pin GPIO_PIN_9
 #define LCD_GPIO_Port GPIOB
-#define Audio_Tx_Pin GPIO_PIN_0
+#define Audio_Rx_Pin GPIO_PIN_0
+#define Audio_Rx_GPIO_Port GPIOA
+#define Audio_Tx_Pin GPIO_PIN_1
 #define Audio_Tx_GPIO_Port GPIOA
-#define Audio_Tx_EXTI_IRQn EXTI0_1_IRQn
-#define Audio_TxA1_Pin GPIO_PIN_1
-#define Audio_TxA1_GPIO_Port GPIOA
 #define LED_Pin GPIO_PIN_4
 #define LED_GPIO_Port GPIOA
 #define WP_Pin GPIO_PIN_7

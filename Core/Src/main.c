@@ -85,13 +85,13 @@ void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin){
 	  ssd1306_Fill(Black);
 	  ssd1306_SetCursor(0, 0);
 
-	  sprintf(buf, "OK = %d", rxFreq);
+	  sprintf(buf, "OK");
 	  ssd1306_UpdateScreen();
 	if (GPIO_Pin == GPIO_PIN_1) {
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
 
-		sprintf(buf, "OK_1 = %d", rxFreq);
+		sprintf(buf, "OK_1");
 		ssd1306_UpdateScreen();
 
 	}
@@ -146,13 +146,13 @@ int main(void)
   ssd1306_Fill(Black);
   ssd1306_SetCursor(0, 0);
 
-  sprintf(buf, "RxFreq = %d", rxFreq);
+  sprintf(buf, "RxFreq = %d", 150);
 
   ssd1306_WriteString(buf, Font_7x10, White);
   ssd1306_SetCursor(0, 20);
 
 
-  sprintf(buf, "TxFreq = %d", txFreq);
+  sprintf(buf, "TxFreq = %d", 145);
   ssd1306_WriteString(buf, Font_7x10, White);
   ssd1306_SetCursor(0, 40);
 
@@ -394,7 +394,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 9600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -445,7 +445,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LCD_GPIO_Port, LCD_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Audio_TxA1_Pin|LED_Pin|WP_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Audio_Tx_Pin|LED_Pin|WP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LCD_Pin */
   GPIO_InitStruct.Pin = LCD_Pin;
@@ -454,14 +454,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LCD_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Audio_Tx_Pin */
-  GPIO_InitStruct.Pin = Audio_Tx_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pin : Audio_Rx_Pin */
+  GPIO_InitStruct.Pin = Audio_Rx_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(Audio_Tx_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(Audio_Rx_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Audio_TxA1_Pin LED_Pin WP_Pin */
-  GPIO_InitStruct.Pin = Audio_TxA1_Pin|LED_Pin|WP_Pin;
+  /*Configure GPIO pins : Audio_Tx_Pin LED_Pin WP_Pin */
+  GPIO_InitStruct.Pin = Audio_Tx_Pin|LED_Pin|WP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -474,9 +474,6 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(SW_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
-
   HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
