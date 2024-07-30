@@ -252,7 +252,7 @@ int main(void)
 
 */
 
-  uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,170.0000,0000,4,0000\r\n";//передача приём
+  uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,145.0000,0000,4,0000\r\n";//передача приём
       HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 
 
