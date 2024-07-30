@@ -135,64 +135,15 @@ void Eeprom_Write(){
 
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	 if (htim->Instance == TIM16) {
-		 HAL_GPIO_TogglePin(Audio_Tx_GPIO_Port, Audio_Tx_Pin);
-	 }
-    if (htim->Instance == TIM14) {
-    	if(counter==10)counter=0;
-    	if(counter==0){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,145.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    		HAL_TIM_Base_Start_IT(&htim16);
-    	}
-    	else if(counter==1){
-    		HAL_TIM_Base_Stop_IT(&htim16);
-    		uint8_t str[] = "AT+DMOSETGROUP=0,148.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	}
-    	else if(counter==2){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,151.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	    	}
-    	else if(counter==3){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,154.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	    	}
-    	else if(counter==4){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,157.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	    	}
-    	else if(counter==5){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,160.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	    	}
-    	else if(counter==6){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,163.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	    	}
-    	else if(counter==7){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,166.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	    	}
-    	else if(counter==8){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,169.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	    	}
-    	else if(counter==9){
-    		uint8_t str[] = "AT+DMOSETGROUP=0,172.0000,150.0000,0000,4,0000\r\n";//передача приём
-    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-    	    	}
 
-    	counter++;
-    	ssd1306_Fill(Black);
-    	ssd1306_SetCursor(0, 0);
-    	sprintf(buf, "%d", counter);
-    	ssd1306_WriteString(buf, Font_7x10, White);
-    	ssd1306_UpdateScreen();
-        // Ваш код здесь, который выполняется раз в секунду
-    }
+
 }
 
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin){
+	if (GPIO_Pin == GPIO_PIN_1) {
+		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+	}
+}
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_5) {
     	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
@@ -301,70 +252,21 @@ int main(void)
 
 */
 
-  SA818_Init(&hsa818, &huart1);
+  uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,170.0000,0000,4,0000\r\n";//передача приём
+      HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 
-    if (SA818_Begin(&hsa818) == 0) {
-    	// Обработка ошибки начала работы
-    Error_Handler();
-    }
 
-    // Установка конфигурации трансивера
-      SA818_SetConfig(&hsa818, SA_BANDWIDTH_12_5KHZ, txFreq, rxFreq, SA_CTCSS_OFF, SA_CTCSS_OFF, SA_SQUELCH_OFF);
-
-    // Установка громкости
-    SA818_SetVolume(&hsa818, SA_VOLUME_DEFAULT);
 
     // Включение/настройка фильтров
     //SA818_SetFilters(&hsa818, SA_FILTER_ON, SA_FILTER_ON, SA_FILTER_ON);
     HAL_TIM_Base_Start_IT(&htim14);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	  int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
-	  	      currCounter = 32767 - ((currCounter-1) & 0xFFFF) / 2;
-	  	      if(currCounter > 32768/2) {
-	  	          currCounter = currCounter - 32768;
-	  	      }
-	  	      if(currCounter != prevCounter) {
-	  	          int32_t delta = currCounter-prevCounter;
-	  	          prevCounter = currCounter;
-
-	  	          if((delta > -10) && (delta < 10)) {
-
-	  	        	ssd1306_Fill(Black);
-	  	        	ssd1306_SetCursor(0, 0);
-	  	        	if(mode==1){
-	  	        		  rxFreq += delta;
-	  	        		  if(rxFreq<0)rxFreq = 0;
-	  	        		  sprintf(buf, "* RxFrequency = %d", rxFreq);
-	  	        	}
-	  	        	  else
-	  	        	      sprintf(buf, "  RxFrequency = %d", rxFreq);
-	  	        	  ssd1306_WriteString(buf, Font_7x10, White);
-	  	        	  ssd1306_SetCursor(0, 20);
-	  	        	  if(mode==2){
-	  	        		  txFreq += delta;
-	  	        		  if(txFreq<0)txFreq = 0;
-	  	        	      sprintf(buf, "* TxFrequency = %d", txFreq);
-	  	        	  }
-	  	        	  else
-	  	        	      sprintf(buf, "  TxFrequency = %d", txFreq);
-	  	        	  ssd1306_WriteString(buf, Font_7x10, White);
-	  	        	  ssd1306_SetCursor(0, 40);
-	  	        	  if(mode==3)
-	  	        	      sprintf(buf, "* Mode = %d", mode);
-	  	        	  else
-	  	        	      sprintf(buf, "  Mode = %d", mode);
-	  	        	  ssd1306_WriteString(buf, Font_7x10, White);
-	  	        	  ssd1306_UpdateScreen();
-	  	          }
-	  	      }
-
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -641,7 +543,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LCD_GPIO_Port, LCD_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Audio_Tx_Pin|LED_Pin|WP_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Audio_TxA1_Pin|LED_Pin|WP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LCD_Pin */
   GPIO_InitStruct.Pin = LCD_Pin;
@@ -650,14 +552,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LCD_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Audio_Rx_Pin */
-  GPIO_InitStruct.Pin = Audio_Rx_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : Audio_Tx_Pin */
+  GPIO_InitStruct.Pin = Audio_Tx_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(Audio_Rx_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(Audio_Tx_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Audio_Tx_Pin LED_Pin WP_Pin */
-  GPIO_InitStruct.Pin = Audio_Tx_Pin|LED_Pin|WP_Pin;
+  /*Configure GPIO pins : Audio_TxA1_Pin LED_Pin WP_Pin */
+  GPIO_InitStruct.Pin = Audio_TxA1_Pin|LED_Pin|WP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -670,6 +572,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(SW_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
+
   HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
