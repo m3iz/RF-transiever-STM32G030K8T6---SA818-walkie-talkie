@@ -74,64 +74,6 @@ static void MX_TIM16_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-// Settings for SA818
-
-int rxFreq = 0;
-int txFreq = 0;
-int counter = 0;
-uint8_t mode = 0; // 0 - standart mode; 1 - rx Freq configuration; 2 - tx Freq configuration
-
-int32_t prevCounter = 0;
-
-
-void Eeprom_Init() {
-    //const char wmsg[] = "Some data";
-    //char rmsg[sizeof(wmsg)];
-	uint16_t wmsg[2];
-	uint16_t rmsg[sizeof(wmsg)];
-	memset(wmsg, 0, sizeof(wmsg));
-    // HAL expects address to be shifted one bit to the left
-    uint16_t devAddr = (0x50 << 1);
-    uint16_t memAddr = 0x0100;
-    HAL_StatusTypeDef status;
-
-    //HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
-    //   (uint8_t*)wmsg, sizeof(wmsg), HAL_MAX_DELAY);
-
-    for(;;) {
-        status = HAL_I2C_IsDeviceReady(&hi2c1, devAddr, 1,
-                                       HAL_MAX_DELAY);
-        if(status == HAL_OK)
-            break;
-    }
-
-    HAL_I2C_Mem_Read(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
-        (uint8_t*)rmsg, sizeof(rmsg), HAL_MAX_DELAY);
-    rxFreq = rmsg[0];
-    txFreq = rmsg[1];
-
-}
-
-void Eeprom_Write(){
-
-		uint16_t wmsg[2];
-		wmsg[0] = rxFreq;
-		wmsg[1] = txFreq;
-
-	    uint16_t devAddr = (0x50 << 1);
-	    uint16_t memAddr = 0x0100;
-	    HAL_StatusTypeDef status;
-
-	    HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
-	        (uint8_t*)wmsg, sizeof(wmsg), HAL_MAX_DELAY);
-
-	    for(;;) {
-	        status = HAL_I2C_IsDeviceReady(&hi2c1, devAddr, 1,
-	                                       HAL_MAX_DELAY);
-	        if(status == HAL_OK)
-	            break;
-	    }
-}
 
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -140,38 +82,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 }
 
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin){
+	  ssd1306_Fill(Black);
+	  ssd1306_SetCursor(0, 0);
+
+	  sprintf(buf, "OK = %d", rxFreq);
+	  ssd1306_UpdateScreen();
 	if (GPIO_Pin == GPIO_PIN_1) {
-		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+		ssd1306_Fill(Black);
+		ssd1306_SetCursor(0, 0);
+
+		sprintf(buf, "OK_1 = %d", rxFreq);
+		ssd1306_UpdateScreen();
+
 	}
 }
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_5) {
     	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    	//SSD1306_ClearScreen();
-    	mode++;
-    	Eeprom_Write();
-    	//SA818_SetConfig(&hsa818, SA_BANDWIDTH_12_5KHZ, txFreq, rxFreq, SA_CTCSS_OFF, SA_CTCSS_OFF, SA_SQUELCH_OFF);
-    	if(mode==4)mode=0;
-    	ssd1306_Fill(Black);
-    	ssd1306_SetCursor(0, 0);
-    	if(mode==1)
-    		sprintf(buf, "* RxFrequency = %d", rxFreq);
-    	else
-    		sprintf(buf, "  RxFrequency = %d", rxFreq);
-    	ssd1306_WriteString(buf, Font_7x10, White);
-    	ssd1306_SetCursor(0, 20);
-    	if(mode==2)
-    		sprintf(buf, "* TxFrequency = %d", txFreq);
-    	else
-    		sprintf(buf, "  TxFrequency = %d", txFreq);
-    	ssd1306_WriteString(buf, Font_7x10, White);
-    	ssd1306_SetCursor(0, 40);
-    	if(mode==3)
-    		sprintf(buf, "* Mode = %d", mode);
-    	else
-    		sprintf(buf, "  Mode = %d", mode);
-    	ssd1306_WriteString(buf, Font_7x10, White);
-    	ssd1306_UpdateScreen();
     }
 }
 
@@ -212,54 +139,29 @@ int main(void)
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-  Eeprom_Init();
+
   ssd1306_Init();
   //ssd1306_Fill(Black);
 
   ssd1306_Fill(Black);
   ssd1306_SetCursor(0, 0);
-  if(mode==1)
-	  sprintf(buf, "* RxFrequency = %d", rxFreq);
-  else
-      sprintf(buf, "  RxFrequency = %d", rxFreq);
+
+  sprintf(buf, "RxFreq = %d", rxFreq);
+
   ssd1306_WriteString(buf, Font_7x10, White);
   ssd1306_SetCursor(0, 20);
-  if(mode==2)
-      sprintf(buf, "* TxFrequency = %d", txFreq);
-  else
-      sprintf(buf, "  TxFrequency = %d", txFreq);
+
+
+  sprintf(buf, "TxFreq = %d", txFreq);
   ssd1306_WriteString(buf, Font_7x10, White);
   ssd1306_SetCursor(0, 40);
-  if(mode==3)
-      sprintf(buf, "* Mode = %d", mode);
-  else
-      sprintf(buf, "  Mode = %d", mode);
-  ssd1306_WriteString(buf, Font_7x10, White);
+
   ssd1306_UpdateScreen();
 
-  /*SSD1306_Init();
-  SSD1306_ClearScreen();
-  while(SSD1306_IsReady() == 0);
-  for (uint8_t  i = 0; i < 8; i++)
-  	  	        		      {
-  	  	        		        SSD1306_DrawFilledRect(i * 16, i * 16 + 8, 16, 48);
-  	  	        		        SSD1306_UpdateScreen();
-  	  	        		        while(SSD1306_IsReady() == 0);
-
-  	  	        		        //HAL_Delay(25);
-  	  	        		      }
-
-*/
-
   uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,145.0000,0000,4,0000\r\n";//передача приём
-      HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+  HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 
-
-
-    // Включение/настройка фильтров
-    //SA818_SetFilters(&hsa818, SA_FILTER_ON, SA_FILTER_ON, SA_FILTER_ON);
-    HAL_TIM_Base_Start_IT(&htim14);
+  HAL_TIM_Base_Start_IT(&htim14);
 
   /* USER CODE END 2 */
 
