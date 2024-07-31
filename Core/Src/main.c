@@ -25,7 +25,9 @@
 #include "fonts.h"
 #include "SA818.h"
 #include <string.h>
+
 #define SSD1306_INCLUDE_FONT_7x10
+#define FREQ 800
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +38,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define SSD1306_USE_I2C
-
+int counter = 0;
 char buf[1024];
 
 /* USER CODE END PD */
@@ -76,10 +78,58 @@ static void MX_ADC1_Init(void);
 
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+counter++;
+uint8_t str2[]="RSSI?\r\n";
+    				uint8_t rxbuf[100];
 
+    	if(counter==1){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,148.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    		HAL_UART_Receive(&huart1, rxbuf, sizeof(rxbuf), 300);
 
+    		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
+
+    		HAL_UART_Receive(&huart1, rxbuf, sizeof(rxbuf), 300);
+    		HAL_Delay(100);
+    	}
+    	else if(counter==2){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,151.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==3){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,154.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==4){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,157.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==5){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,160.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==6){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,163.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==7){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,166.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==8){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,169.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+    	else if(counter==9){
+    		uint8_t str[] = "AT+DMOSETGROUP=0,172.0000,150.0000,0000,4,0000\r\n";//передача приём
+    		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+    	    	}
+else if(counter==10){
+	counter = 0;
+	HAL_ADC_Start_IT(&hadc1);
 }
 
+}
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin == GPIO_PIN_5) {
     	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
@@ -100,23 +150,26 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     if (hadc->Instance == ADC1) {
         adcValue = HAL_ADC_GetValue(hadc);
 
-        if ((prevAdcValue < 435  && adcValue >= 435) || (prevAdcValue >= 435 && adcValue < 435)) {
-            zeroCrossings++;
-        }
+        if ((prevAdcValue < 250 && adcValue >= 250) || (prevAdcValue >= 250 && adcValue < 250))
+               {
+                   zeroCrossings++;
+               }
 
-        prevAdcValue = adcValue;
-        sampleCount++;
+               prevAdcValue = adcValue;
+               sampleCount++;
 
-        if (sampleCount >= 200*5) { // 200 выборок при 10 кГц ~ 20 мс
-            HAL_ADC_Stop_IT(hadc); // Остановить АЦП
-        }
+               // Прекратить измерение после заданного количества выборок
+               if (sampleCount >= 10000) // 10000 выборок при 10 кГц ~ 1 секунда
+               {
+                   HAL_ADC_Stop_IT(hadc); // Остановить АЦП
+               }
     }
 }
 
 float calculateFrequency(void) {
-    float timePeriod = (sampleCount / 10000.0); // время в секундах, т.к. частота дискретизации 10 кГц
-    float frequency = zeroCrossings / (2 * timePeriod); // частота сигнала
-    return frequency;
+	float timePeriod = (sampleCount / 43199.0); // время в секундах, т.к. частота дискретизации 10 кГц
+	float frequency = zeroCrossings / (2 * timePeriod); // частота сигнала
+	return frequency;
 }
 
 /* USER CODE END 0 */
@@ -162,13 +215,13 @@ int main(void)
   ssd1306_Fill(Black);
   ssd1306_SetCursor(0, 0);
 
-  sprintf(buf, "RxFreq = %d", 150);
+  sprintf(buf, "RxFreq = %d Mhz", 150);
 
   ssd1306_WriteString(buf, Font_7x10, White);
   ssd1306_SetCursor(0, 20);
 
 
-  sprintf(buf, "TxFreq = %d", 145);
+  sprintf(buf, "TxFreq = %d MHz", 145);
   ssd1306_WriteString(buf, Font_7x10, White);
   ssd1306_SetCursor(0, 40);
 
@@ -177,7 +230,7 @@ int main(void)
   uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,145.0000,0000,4,0000\r\n";//передача приём
   HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 
-  HAL_TIM_Base_Start_IT(&htim14);
+
 
 
   //
@@ -194,16 +247,24 @@ int main(void)
 	              ssd1306_Fill(Black);
 	               ssd1306_SetCursor(0, 0);
 
-	               sprintf(buf, "RxFreq = %d", freq);
+	               sprintf(buf, "RxFreq = %d GHz", freq);
+
 
 	               ssd1306_WriteString(buf, Font_7x10, White);
 	               ssd1306_SetCursor(0, 20);
-
+	               sprintf(buf, "A meander has been");
+	               ssd1306_WriteString(buf, Font_7x10, White);
+	               ssd1306_SetCursor(0, 30);
+	               sprintf(buf, "found");
+	               ssd1306_WriteString(buf, Font_7x10, White);
 
 	               ssd1306_UpdateScreen();
 	              sampleCount = 0;
 	              zeroCrossings = 0;
+	              if((freq>FREQ-5)&&(freq<FREQ+5))HAL_TIM_Base_Start_IT(&htim14);
+	              else
 	              HAL_ADC_Start_IT(&hadc1); // Перезапуск АЦП
+
 	          }
     /* USER CODE END WHILE */
 
