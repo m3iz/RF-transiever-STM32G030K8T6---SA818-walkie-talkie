@@ -327,7 +327,7 @@ int main(void) {
 				int freq = calculateFrequency();
 				ssd1306_Fill(Black);
 				ssd1306_SetCursor(0, 0);
-				sprintf(buf, "RxFreq = %d GHz", freq);
+				sprintf(buf, "RxFreq = %d Hz", freq);
 				ssd1306_WriteString(buf, Font_7x10, White);
 				sampleCount = 0;
 				zeroCrossings = 0;
