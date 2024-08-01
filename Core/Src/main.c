@@ -40,6 +40,8 @@
 #define SSD1306_USE_I2C
 int counter = 0;
 int counted = 0;
+int pageNum = 1;
+int rssiBuf[9] = { 0 };
 char buf[1024];
 
 /* USER CODE END PD */
@@ -225,6 +227,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_5) {
 		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+		pageNum+=3;
+		if (pageNum == 10)
+			pageNum = 1;
 	}
 }
 
@@ -346,10 +351,14 @@ int main(void) {
 		} else {
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
-			sprintf(buf, "RSSI:");
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum, rssiBuf[pageNum-1]);
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_SetCursor(0, 20);
-
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum+1, rssiBuf[pageNum]);
+			ssd1306_WriteString(buf, Font_7x10, White);
+			ssd1306_SetCursor(0, 40);
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum+2, rssiBuf[pageNum+1]);
+			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_UpdateScreen();
 		}
 		/* USER CODE END WHILE */
