@@ -321,7 +321,7 @@ int main(void)
 
 	ssd1306_UpdateScreen();
 
-	uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,145.0000,0000,4,0000\r\n";
+	uint8_t str[] = "AT+DMOSETGROUP=0,145.0000, 150.0000,0000,4,0000\r\n";
 	HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 
 	HAL_ADC_Start_IT(&hadc1);
