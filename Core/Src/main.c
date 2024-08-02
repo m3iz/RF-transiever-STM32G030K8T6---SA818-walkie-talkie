@@ -376,9 +376,12 @@ int main(void) {
 
 	ssd1306_UpdateScreen();
 
-	uint8_t str[] = "AT+DMOSETGROUP=0,145.0000, 150.0000,0000,4,0000\r\n";
+	uint8_t str[] = "AT+DMOSETGROUP=0,145.0000,150.0000,0000,4,0000\r\n";
+	//uint8_t str[] = "AT+DMOSETGROUP=0,170.0000,150.0000,0000,4,0000\r\n";//передача приём
 	HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-
+	HAL_Delay(200);
+	uint8_t str2[] = "RSSI?\r\n";
+	HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 	HAL_ADC_Start_IT(&hadc1);
 
 	/* USER CODE END 2 */
@@ -410,14 +413,14 @@ int main(void) {
 		} else {
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum, rssiBuf[pageNum - 1]);
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum, (int)(1.107 * rssiBuf[pageNum - 1] - 160.468));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_SetCursor(0, 20);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 1, rssiBuf[pageNum]);
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 1, (int)(1.113*rssiBuf[pageNum]-160));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_SetCursor(0, 40);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 2,
-					rssiBuf[pageNum + 1]);
+			sprintf(buf, "RSSI: [%d] %f dbm", pageNum + 2,
+					(int)(1.113*rssiBuf[pageNum + 1]-160));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_UpdateScreen();
 		}
