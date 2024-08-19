@@ -413,13 +413,13 @@ int main(void) {
 		} else {
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum, (int)(1.107 * rssiBuf[pageNum - 1] - 160.468));
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum, (int)(1.113 * rssiBuf[pageNum - 1] - 160));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_SetCursor(0, 20);
 			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 1, (int)(1.113*rssiBuf[pageNum]-160));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_SetCursor(0, 40);
-			sprintf(buf, "RSSI: [%d] %f dbm", pageNum + 2,
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 2,
 					(int)(1.113*rssiBuf[pageNum + 1]-160));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_UpdateScreen();
