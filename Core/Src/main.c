@@ -138,7 +138,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM14) {
 
 		if (counter == 0) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,145.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,145.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			HAL_TIM_Base_Start_IT(&htim16);
 			ssd1306_Fill(Black);
@@ -154,7 +154,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			ssd1306_UpdateScreen();
 		} else if (counter == 1) {
 			HAL_TIM_Base_Stop_IT(&htim16);
-			uint8_t str[] = "AT+DMOSETGROUP=0,148.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,148.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
@@ -168,7 +168,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			ssd1306_UpdateScreen();
 		} else if (counter == 2) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,151.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,151.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
@@ -182,7 +182,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			ssd1306_UpdateScreen();
 		} else if (counter == 3) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,154.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,154.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
@@ -196,7 +196,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			ssd1306_UpdateScreen();
 		} else if (counter == 4) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,157.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,157.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
@@ -210,7 +210,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			ssd1306_UpdateScreen();
 		} else if (counter == 5) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,160.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,160.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
@@ -224,7 +224,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			ssd1306_UpdateScreen();
 		} else if (counter == 6) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,163.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,163.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
@@ -238,7 +238,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			ssd1306_UpdateScreen();
 		} else if (counter == 7) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,166.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,166.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
@@ -252,7 +252,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			ssd1306_UpdateScreen();
 		} else if (counter == 8) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,169.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,169.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
@@ -266,7 +266,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 			ssd1306_UpdateScreen();
 		} else if (counter == 9) {
-			uint8_t str[] = "AT+DMOSETGROUP=0,172.0000,150.0000,0000,4,0000\r\n"; //передача приём
+			uint8_t str[] = "AT+DMOSETGROUP=0,150.0000,172.0000,0000,4,0000\r\n"; //передача приём
 			HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
