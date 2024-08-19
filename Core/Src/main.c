@@ -88,28 +88,31 @@ void delay_200ms() {
 	}
 }
 
-void getRssi(){
+void getRssi() {
 	int index = 0;
-	    int i = 0;
+	int i = 0;
 
-	    while (rxBuffer[i] != '\0' && index < 9) {
-	        if (rxBuffer[i] == '=') {
-	            i++;  // Пропустить знак равно
-	            while (isspace(rxBuffer[i])) {  // Пропустить пробелы после знака равно
-	                i++;
-	            }
-	            if (isdigit(rxBuffer[i]) || (rxBuffer[i] == '-' && isdigit(rxBuffer[i + 1]))) {
-	                rssiBuf[index] = atoi((char *)&rxBuffer[i]);
-	                index++;
-	                // Пропустить число
-	                while (isdigit(rxBuffer[i]) || rxBuffer[i] == '-') {
-	                    i++;
-	                }
-	            }
-	        } else {
-	            i++;
-	        }
-	    }
+	while (rxBuffer[i] != '\0' && index < 9) {
+		if (rxBuffer[i] == '=') {
+			i++;
+			while (isspace(rxBuffer[i])) {
+				i++;
+			}
+			if (isdigit(rxBuffer[i])
+					|| (rxBuffer[i] == '-' && isdigit(rxBuffer[i + 1]))) {
+				rssiBuf[index] = atoi((char*) &rxBuffer[i]);
+				if (rssiBuf[index] < 20)
+					rssiBuf[index] = 0;
+				index++;
+				// Пропустить число
+				while (isdigit(rxBuffer[i]) || rxBuffer[i] == '-') {
+					i++;
+				}
+			}
+		} else {
+			i++;
+		}
+	}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -125,11 +128,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		//rssiBuf[0]=readRssi();
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 148);
+		sprintf(buf, "RxFreq = %d MHz", 148);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -142,11 +145,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 151);
+		sprintf(buf, "RxFreq = %d MHz", 151);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -160,11 +163,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 154);
+		sprintf(buf, "RxFreq = %d MHz", 154);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -177,11 +180,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 157);
+		sprintf(buf, "RxFreq = %d MHz", 157);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -194,11 +197,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 160);
+		sprintf(buf, "RxFreq = %d MHz", 160);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -211,11 +214,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 163);
+		sprintf(buf, "RxFreq = %d MHz", 163);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -228,11 +231,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 166);
+		sprintf(buf, "RxFreq = %d MHz", 166);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -245,11 +248,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 169);
+		sprintf(buf, "RxFreq = %d MHz", 169);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -263,11 +266,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 		ssd1306_Fill(Black);
 		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "RxFreq = %d Mhz", 150);
+		sprintf(buf, "TxFreq = %d Mhz", 150);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 20);
 
-		sprintf(buf, "TxFreq = %d MHz", 172);
+		sprintf(buf, "RxFreq = %d MHz", 172);
 		ssd1306_WriteString(buf, Font_7x10, White);
 		ssd1306_SetCursor(0, 40);
 
@@ -364,13 +367,12 @@ int main(void) {
 	ssd1306_Fill(Black);
 	ssd1306_SetCursor(0, 0);
 
-	sprintf(buf, "RxFreq = %d Mhz", 150);
+	sprintf(buf, "TxFreq = %d Mhz", 150);
 
 	ssd1306_WriteString(buf, Font_7x10, White);
 	ssd1306_SetCursor(0, 20);
-	HAL_Delay(1);
 
-	sprintf(buf, "TxFreq = %d MHz", 145);
+	sprintf(buf, "RxFreq = %d MHz", 145);
 	ssd1306_WriteString(buf, Font_7x10, White);
 	ssd1306_SetCursor(0, 40);
 
@@ -380,8 +382,6 @@ int main(void) {
 	//uint8_t str[] = "AT+DMOSETGROUP=0,170.0000,150.0000,0000,4,0000\r\n";//передача приём
 	HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 	HAL_Delay(200);
-	uint8_t str2[] = "RSSI?\r\n";
-	HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
 	HAL_ADC_Start_IT(&hadc1);
 
 	/* USER CODE END 2 */
@@ -413,14 +413,16 @@ int main(void) {
 		} else {
 			ssd1306_Fill(Black);
 			ssd1306_SetCursor(0, 0);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum, (int)(1.113 * rssiBuf[pageNum - 1] - 160));
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum,
+					(int) (1.113 * rssiBuf[pageNum - 1] - 160));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_SetCursor(0, 20);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 1, (int)(1.113*rssiBuf[pageNum]-160));
+			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 1,
+					(int) (1.113 * rssiBuf[pageNum] - 160));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_SetCursor(0, 40);
 			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 2,
-					(int)(1.113*rssiBuf[pageNum + 1]-160));
+					(int) (1.113 * rssiBuf[pageNum + 1] - 160));
 			ssd1306_WriteString(buf, Font_7x10, White);
 			ssd1306_UpdateScreen();
 		}
