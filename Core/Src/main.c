@@ -289,7 +289,7 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_5) {
 		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 		pageNum += 3;
-		if (pageNum == 10)
+		if (pageNum == 13)
 			pageNum = 1;
 	}
 }
@@ -367,14 +367,17 @@ int main(void) {
 	ssd1306_Fill(Black);
 	ssd1306_SetCursor(0, 0);
 
-	sprintf(buf, "TxFreq = %d Mhz", 150);
+	sprintf(buf, "Start: %d Mhz", 145);
 
 	ssd1306_WriteString(buf, Font_7x10, White);
 	ssd1306_SetCursor(0, 20);
 
-	sprintf(buf, "RxFreq = %d MHz", 145);
+	sprintf(buf, "Stop: %d MHz", 173);
 	ssd1306_WriteString(buf, Font_7x10, White);
+
 	ssd1306_SetCursor(0, 40);
+	sprintf(buf, "Steps: %d", 10);
+	ssd1306_WriteString(buf, Font_7x10, White);
 
 	ssd1306_UpdateScreen();
 
@@ -392,39 +395,74 @@ int main(void) {
 		if (!counted) {
 			if (sampleCount >= 10000) {
 				int freq = calculateFrequency();
-				ssd1306_Fill(Black);
-				ssd1306_SetCursor(0, 0);
-				sprintf(buf, "RxFreq = %d Hz", freq);
-				ssd1306_WriteString(buf, Font_7x10, White);
 				sampleCount = 0;
 				zeroCrossings = 0;
 				if ((freq > FREQ - 5) && (freq < FREQ + 5)) {
-					ssd1306_SetCursor(0, 20);
-					sprintf(buf, "A meander has been");
-					ssd1306_WriteString(buf, Font_7x10, White);
-					ssd1306_SetCursor(0, 30);
-					sprintf(buf, "found");
-					ssd1306_WriteString(buf, Font_7x10, White);
 					HAL_TIM_Base_Start_IT(&htim14);
 				} else
 					HAL_ADC_Start_IT(&hadc1);
-				ssd1306_UpdateScreen();
 			}
 		} else {
-			ssd1306_Fill(Black);
-			ssd1306_SetCursor(0, 0);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum,
-					(int) (1.113 * rssiBuf[pageNum - 1] - 160));
-			ssd1306_WriteString(buf, Font_7x10, White);
-			ssd1306_SetCursor(0, 20);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 1,
-					(int) (1.113 * rssiBuf[pageNum] - 160));
-			ssd1306_WriteString(buf, Font_7x10, White);
-			ssd1306_SetCursor(0, 40);
-			sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 2,
-					(int) (1.113 * rssiBuf[pageNum + 1] - 160));
-			ssd1306_WriteString(buf, Font_7x10, White);
-			ssd1306_UpdateScreen();
+			if (pageNum == 10) {
+				ssd1306_Fill(Black);
+
+				// Определение диапазона значений RSSI
+				const int8_t RSSI_MIN = -160;
+				const int8_t RSSI_MAX = -30;
+
+				// Определение размеров дисплея
+				const uint8_t DISPLAY_WIDTH = 128;
+				const uint8_t DISPLAY_HEIGHT = 64;
+
+				// Определение количества значений в буфере
+				size_t rssiBufSize = sizeof(rssiBuf) / sizeof(rssiBuf[0]);
+
+				// Определение шага по оси X с учетом уменьшенного расстояния
+				const uint8_t STEP_X = DISPLAY_WIDTH / rssiBufSize; // Изменено с (rssiBufSize - 1) на rssiBufSize
+
+				char buf[10];  // Буфер для строки
+
+				// Перебор значений из буфера и отрисовка линий между ними
+				for (size_t i = 0; i < rssiBufSize; i++) {
+					// Нормализация значений RSSI для отображения на дисплее
+					uint8_t y = (uint8_t) ((rssiBuf[i] - RSSI_MIN)
+							* DISPLAY_HEIGHT / (RSSI_MAX - RSSI_MIN));
+
+					// Определение координаты по оси X
+					uint8_t x = i * STEP_X + STEP_X / 2; // Центруем точки на каждом шаге
+
+					// Если не первый элемент, рисуем линию от предыдущего к текущему
+					if (i > 0) {
+						uint8_t prev_x = (i - 1) * STEP_X + STEP_X / 2;
+						uint8_t prev_y = (uint8_t) ((rssiBuf[i - 1] - RSSI_MIN)
+								* DISPLAY_HEIGHT / (RSSI_MAX - RSSI_MIN));
+						ssd1306_Line(prev_x, prev_y, x, y, White);
+					}
+
+					// Подпись по оси X
+					ssd1306_SetCursor(x - 3, DISPLAY_HEIGHT - 10); // Устанавливаем курсор на 10 пикселей выше нижней границы дисплея, с учетом центровки подписи
+					snprintf(buf, sizeof(buf), "%d", (int) (i + 1)); // Форматируем индекс массива (начиная с 1)
+					ssd1306_WriteString(buf, Font_7x10, White); // Выводим индекс на дисплей
+				}
+
+				ssd1306_UpdateScreen();
+
+			} else {
+				ssd1306_Fill(Black);
+				ssd1306_SetCursor(0, 0);
+				sprintf(buf, "RSSI: [%d] %d dbm", pageNum,
+						(int) (1.113 * rssiBuf[pageNum - 1] - 160));
+				ssd1306_WriteString(buf, Font_7x10, White);
+				ssd1306_SetCursor(0, 20);
+				sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 1,
+						(int) (1.113 * rssiBuf[pageNum] - 160));
+				ssd1306_WriteString(buf, Font_7x10, White);
+				ssd1306_SetCursor(0, 40);
+				sprintf(buf, "RSSI: [%d] %d dbm", pageNum + 2,
+						(int) (1.113 * rssiBuf[pageNum + 1] - 160));
+				ssd1306_WriteString(buf, Font_7x10, White);
+				ssd1306_UpdateScreen();
+			}
 		}
 		/* USER CODE END WHILE */
 
