@@ -404,10 +404,11 @@ int main(void) {
 			}
 		} else {
 			if (pageNum == 10) {
-				ssd1306_Fill(Black);
+				// Инициализация дисплея
+				ssd1306_Fill(Black);  // Очистка экрана
 
 				// Определение диапазона значений RSSI
-				const int8_t RSSI_MIN = -160;
+				const int16_t RSSI_MIN = -160;
 				const int8_t RSSI_MAX = -30;
 
 				// Определение размеров дисплея
@@ -417,34 +418,55 @@ int main(void) {
 				// Определение количества значений в буфере
 				size_t rssiBufSize = sizeof(rssiBuf) / sizeof(rssiBuf[0]);
 
-				// Определение шага по оси X с учетом уменьшенного расстояния
-				const uint8_t STEP_X = DISPLAY_WIDTH / rssiBufSize; // Изменено с (rssiBufSize - 1) на rssiBufSize
+				// Определение шага по оси X
+				const uint8_t STEP_X = (DISPLAY_WIDTH - 1) / (rssiBufSize - 1); // Корректировка шага
 
-				char buf[10];  // Буфер для строки
+				// Определение интервалов для осей
+				const uint8_t AXIS_MARGIN = 10; // Отступ от границы экрана для осей
+
+				// Нарисовать ось X
+				ssd1306_Line(0, DISPLAY_HEIGHT - AXIS_MARGIN-5, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - AXIS_MARGIN-5, White);
+
+				// Нарисовать ось Y
+				ssd1306_Line(AXIS_MARGIN-8, 0, AXIS_MARGIN-8, DISPLAY_HEIGHT - 1, White);
 
 				// Перебор значений из буфера и отрисовка линий между ними
 				for (size_t i = 0; i < rssiBufSize; i++) {
-					// Нормализация значений RSSI для отображения на дисплее
-					uint8_t y = (uint8_t) ((rssiBuf[i] - RSSI_MIN)
-							* DISPLAY_HEIGHT / (RSSI_MAX - RSSI_MIN));
+				    // Вычисление значения RSSI из данных буфера
+				    int rssiValue = (int) (1.113 * rssiBuf[i] - 160);
 
-					// Определение координаты по оси X
-					uint8_t x = i * STEP_X + STEP_X / 2; // Центруем точки на каждом шаге
+				    // Нормализация значений RSSI для отображения на дисплее
+				    uint8_t y = (uint8_t) ((rssiValue - RSSI_MIN) * (DISPLAY_HEIGHT - AXIS_MARGIN) / (RSSI_MAX - RSSI_MIN));
+				    y = DISPLAY_HEIGHT - AXIS_MARGIN - y; // Инвертируем значение, чтобы большие RSSI были выше
 
-					// Если не первый элемент, рисуем линию от предыдущего к текущему
-					if (i > 0) {
-						uint8_t prev_x = (i - 1) * STEP_X + STEP_X / 2;
-						uint8_t prev_y = (uint8_t) ((rssiBuf[i - 1] - RSSI_MIN)
-								* DISPLAY_HEIGHT / (RSSI_MAX - RSSI_MIN));
-						ssd1306_Line(prev_x, prev_y, x, y, White);
-					}
+				    // Определение координаты по оси X
+				    uint8_t x = i * STEP_X;
 
-					// Подпись по оси X
-					ssd1306_SetCursor(x - 3, DISPLAY_HEIGHT - 10); // Устанавливаем курсор на 10 пикселей выше нижней границы дисплея, с учетом центровки подписи
-					snprintf(buf, sizeof(buf), "%d", (int) (i + 1)); // Форматируем индекс массива (начиная с 1)
-					ssd1306_WriteString(buf, Font_7x10, White); // Выводим индекс на дисплей
+				    // Если не первый элемент, рисуем линию от предыдущего к текущему
+				    if (i > 0) {
+				        int prevRssiValue = (int) (1.113 * rssiBuf[i - 1] - 160);
+				        uint8_t prev_y = (uint8_t) ((prevRssiValue - RSSI_MIN) * (DISPLAY_HEIGHT - AXIS_MARGIN) / (RSSI_MAX - RSSI_MIN));
+				        prev_y = DISPLAY_HEIGHT - AXIS_MARGIN - prev_y; // Инвертируем значение Y для предыдущей точки
+
+				        uint8_t prev_x = (i - 1) * STEP_X;
+
+				        ssd1306_Line(prev_x, prev_y, x, y, White);
+				    }
 				}
 
+				// Добавление подписей по оси X
+				for (size_t i = 0; i < rssiBufSize; i++) {
+				    uint8_t x = i * STEP_X;
+
+				    // Подпись
+				    // Устанавливаем курсор немного влево от x, но не ниже нижней границы
+				    uint8_t cursorX = (x < 3) ? 0 : (x - 3); // Корректируем значение, если x < 3
+				    ssd1306_SetCursor(cursorX, DISPLAY_HEIGHT - 10); // Устанавливаем курсор на 10 пикселей выше нижней границы дисплея
+				    snprintf(buf, sizeof(buf), "%d", (int) (i + 1)); // Форматируем индекс массива (начиная с 1)
+				    ssd1306_WriteString(buf, Font_7x10, White); // Выводим индекс на дисплей
+				}
+
+				// Обновление экрана
 				ssd1306_UpdateScreen();
 
 			} else {
