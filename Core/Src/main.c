@@ -43,7 +43,7 @@ int counted = 0;
 int pageNum = 1;
 int rssiBuf[9] = { 0 };
 char buf[1024];
-uint8_t sfreq = 145, ffreq = 172, step = 10, mode = 0;
+uint8_t sfreq = 145, ffreq = 172, step = 9, fstep = 3, mode = 0;
 uint8_t rxBuffer[1024];
 /* USER CODE END PD */
 
@@ -140,54 +140,75 @@ void nextStep(int txfreq, int rxfreq) {
 	ssd1306_UpdateScreen();
 }
 
-void Eeprom_Init() {
-	//const char wmsg[] = "Some data";
+void Eeprom_RW(uint8_t rw) {
+//const char wmsg[] = "Some data";
 	//char rmsg[sizeof(wmsg)];
-	uint16_t wmsg[16];
-	uint16_t rmsg[sizeof(wmsg)];
-	memset(wmsg, 0, sizeof(wmsg) / 2);
-	// HAL expects address to be shifted one bit to the left
-	uint16_t devAddr = (0x50 << 1);
-	uint16_t memAddr = 0x0100;
-	HAL_StatusTypeDef status;
+	if (rw == 1) {
+		uint16_t wmsg[2];
+		wmsg[0] = sfreq;
+		wmsg[1] = ffreq;
 
-	HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
-			(uint8_t*) wmsg, sizeof(wmsg), HAL_MAX_DELAY);
+		uint16_t devAddr = (0x50 << 1);
+		uint16_t memAddr = 0x0100;
+		HAL_StatusTypeDef status;
 
-	for (;;) {
-		status = HAL_I2C_IsDeviceReady(&hi2c1, devAddr, 1,
-		HAL_MAX_DELAY);
-		if (status == HAL_OK)
-			break;
+		HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
+				(uint8_t*) wmsg, sizeof(wmsg), HAL_MAX_DELAY);
+
+		for (;;) {
+			status = HAL_I2C_IsDeviceReady(&hi2c1, devAddr, 1,
+			HAL_MAX_DELAY);
+			if (status == HAL_OK)
+				break;
+		}
+	} else {
+		uint16_t wmsg[2];
+		uint16_t rmsg[sizeof(wmsg)];
+		memset(wmsg, 0, sizeof(wmsg));
+		// HAL expects address to be shifted one bit to the left
+		uint16_t devAddr = (0x50 << 1);
+		uint16_t memAddr = 0x0100;
+		HAL_StatusTypeDef status;
+
+		//HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
+		//   (uint8_t*)wmsg, sizeof(wmsg), HAL_MAX_DELAY);
+
+		for (;;) {
+			status = HAL_I2C_IsDeviceReady(&hi2c1, devAddr, 1,
+			HAL_MAX_DELAY);
+			if (status == HAL_OK)
+				break;
+		}
+
+		HAL_I2C_Mem_Read(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
+				(uint8_t*) rmsg, sizeof(rmsg), HAL_MAX_DELAY);
+		sfreq = rmsg[0];
+		ffreq = rmsg[1];
 	}
-
-	HAL_I2C_Mem_Read(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
-			(uint8_t*) rmsg, sizeof(rmsg), HAL_MAX_DELAY);
-
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	counter++;
 
 	if (counter == 1) {
-		nextStep(148, 148);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 2) {
-		nextStep(151, 151);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 
 	} else if (counter == 3) {
-		nextStep(154, 154);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 4) {
-		nextStep(157, 157);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 5) {
-		nextStep(160, 160);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 6) {
-		nextStep(163, 163);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 7) {
-		nextStep(166, 166);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 8) {
-		nextStep(169, 169);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 9) {
-		nextStep(172, 172);
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 10) {
 		getRssi();
 		counter = 0;
@@ -199,9 +220,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 }
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_5) {
-		if (mode < 4)
+		if (mode < 5) {
 			mode++;
-
+			Eeprom_RW(1);
+		}
 		pageNum += 3;
 		if (pageNum == 13)
 			pageNum = 1;
@@ -303,23 +325,7 @@ int main(void) {
 	/* USER CODE BEGIN 2 */
 	HAL_UART_Receive_DMA(&huart1, rxBuffer, 300);
 	ssd1306_Init();
-	ssd1306_Fill(Black);
-	ssd1306_SetCursor(0, 0);
-
-	sprintf(buf, "Start: %d Mhz", 145);
-
-	ssd1306_WriteString(buf, Font_7x10, White);
-	ssd1306_SetCursor(0, 20);
-
-	sprintf(buf, "Stop: %d MHz", 172);
-	ssd1306_WriteString(buf, Font_7x10, White);
-
-	ssd1306_SetCursor(0, 40);
-	sprintf(buf, "Steps: %d", 10);
-	ssd1306_WriteString(buf, Font_7x10, White);
-
-	ssd1306_UpdateScreen();
-
+	Eeprom_RW(0);
 	uint8_t str[] = "AT+DMOSETGROUP=0,145.0000,145.0000,0000,4,0000\r\n";
 
 	HAL_UART_Transmit(&huart1, str, strlen(str), 300);
@@ -332,7 +338,7 @@ int main(void) {
 	int32_t prevCounter = 0;
 
 	while (1) {
-		if (mode != 4) {
+		if (mode < 4) {
 			drawMenu();
 			int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
 			currCounter = 32767 - ((currCounter - 1) & 0xFFFF) / 2;
@@ -352,14 +358,17 @@ int main(void) {
 					}
 				}
 			}
+		} else if (mode == 4) {
+			fstep = (ffreq - sfreq) / step;
+			HAL_ADC_Start_IT(&hadc1);
 		}
-		else if (mode == 4)HAL_ADC_Start_IT(&hadc1);
 		if (!counted) {
 			if (sampleCount >= 10000) {
 				int freq = calculateFrequency();
 				sampleCount = 0;
 				zeroCrossings = 0;
 				if ((freq > FREQ - 5) && (freq < FREQ + 5)) {
+					//HAL_Delay(50);
 					HAL_TIM_Base_Start_IT(&htim14);
 				} else
 					HAL_ADC_Start_IT(&hadc1);
