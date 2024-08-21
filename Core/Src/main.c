@@ -127,22 +127,20 @@ void nextStep(int txfreq, int rxfreq) {
 	delay_200ms();
 	uint8_t str2[] = "RSSI?\r\n";
 	HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-	ssd1306_Fill(Black);
-	ssd1306_SetCursor(0, 0);
-	sprintf(buf, "TxFreq = %d Mhz", txfreq);
-	ssd1306_WriteString(buf, Font_7x10, White);
-	ssd1306_SetCursor(0, 20);
+	/*ssd1306_Fill(Black);
+	 ssd1306_SetCursor(0, 0);
+	 sprintf(buf, "TxFreq = %d Mhz", txfreq);
+	 ssd1306_WriteString(buf, Font_7x10, White);
+	 ssd1306_SetCursor(0, 20);
 
-	sprintf(buf, "RxFreq = %d MHz", rxfreq);
-	ssd1306_WriteString(buf, Font_7x10, White);
-	ssd1306_SetCursor(0, 40);
+	 sprintf(buf, "RxFreq = %d MHz", rxfreq);
+	 ssd1306_WriteString(buf, Font_7x10, White);
+	 ssd1306_SetCursor(0, 40);
 
-	ssd1306_UpdateScreen();
+	 ssd1306_UpdateScreen();*/
 }
 
 void Eeprom_RW(uint8_t rw) {
-//const char wmsg[] = "Some data";
-	//char rmsg[sizeof(wmsg)];
 	if (rw == 1) {
 		uint16_t wmsg[3];
 		wmsg[0] = sfreq;
@@ -215,7 +213,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		counter = 0;
 		counted = 1;
 		HAL_TIM_Base_Stop(&htim14);
-		HAL_ADC_Start_IT(&hadc1);
+		//HAL_ADC_Start_IT(&hadc1);
 	}
 
 }
@@ -370,7 +368,11 @@ int main(void) {
 				sampleCount = 0;
 				zeroCrossings = 0;
 				if ((freq > FREQ - 5) && (freq < FREQ + 5)) {
-					//HAL_Delay(50);
+					ssd1306_Fill(Black);
+					ssd1306_SetCursor(0, 0);
+					sprintf(buf, "Analyzing...");
+					ssd1306_WriteString(buf, Font_7x10, White);
+					ssd1306_UpdateScreen();
 					HAL_TIM_Base_Start_IT(&htim14);
 				} else
 					HAL_ADC_Start_IT(&hadc1);
