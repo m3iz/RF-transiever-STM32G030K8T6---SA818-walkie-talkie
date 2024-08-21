@@ -144,10 +144,10 @@ void Eeprom_RW(uint8_t rw) {
 //const char wmsg[] = "Some data";
 	//char rmsg[sizeof(wmsg)];
 	if (rw == 1) {
-		uint16_t wmsg[2];
+		uint16_t wmsg[3];
 		wmsg[0] = sfreq;
 		wmsg[1] = ffreq;
-
+		wmsg[2] = step;
 		uint16_t devAddr = (0x50 << 1);
 		uint16_t memAddr = 0x0100;
 		HAL_StatusTypeDef status;
@@ -184,6 +184,7 @@ void Eeprom_RW(uint8_t rw) {
 				(uint8_t*) rmsg, sizeof(rmsg), HAL_MAX_DELAY);
 		sfreq = rmsg[0];
 		ffreq = rmsg[1];
+		step = rmsg[2];
 	}
 }
 
@@ -222,7 +223,7 @@ void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_5) {
 		if (mode < 5) {
 			mode++;
-			Eeprom_RW(1);
+
 		}
 		pageNum += 3;
 		if (pageNum == 13)
@@ -264,6 +265,7 @@ float calculateFrequency(void) {
 }
 
 void drawMenu() {
+	Eeprom_RW(1);
 	ssd1306_Fill(Black);
 	ssd1306_SetCursor(0, 0);
 	if (mode == 1)
