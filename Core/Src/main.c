@@ -43,6 +43,7 @@ int counted = 0;
 int pageNum = 1;
 int rssiBuf[9] = { 0 };
 char buf[1024];
+uint8_t sfreq = 145, ffreq = 172, step = 10, mode = 0;
 uint8_t rxBuffer[1024];
 /* USER CODE END PD */
 
@@ -56,6 +57,7 @@ ADC_HandleTypeDef hadc1;
 
 I2C_HandleTypeDef hi2c1;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim14;
 
 UART_HandleTypeDef huart1;
@@ -73,6 +75,7 @@ static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM14_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -115,169 +118,78 @@ void getRssi() {
 	}
 }
 
+void nextStep(int txfreq, int rxfreq) {
+
+	uint8_t str[100];
+	sprintf(str, "AT+DMOSETGROUP=0,%d.0000,%d.0000,0000,4,0000\r\n", txfreq,
+			rxfreq);
+	HAL_UART_Transmit(&huart1, str, strlen(str), 300);
+	delay_200ms();
+	uint8_t str2[] = "RSSI?\r\n";
+	HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
+	ssd1306_Fill(Black);
+	ssd1306_SetCursor(0, 0);
+	sprintf(buf, "TxFreq = %d Mhz", txfreq);
+	ssd1306_WriteString(buf, Font_7x10, White);
+	ssd1306_SetCursor(0, 20);
+
+	sprintf(buf, "RxFreq = %d MHz", rxfreq);
+	ssd1306_WriteString(buf, Font_7x10, White);
+	ssd1306_SetCursor(0, 40);
+
+	ssd1306_UpdateScreen();
+}
+
+void Eeprom_Init() {
+	//const char wmsg[] = "Some data";
+	//char rmsg[sizeof(wmsg)];
+	uint16_t wmsg[16];
+	uint16_t rmsg[sizeof(wmsg)];
+	memset(wmsg, 0, sizeof(wmsg) / 2);
+	// HAL expects address to be shifted one bit to the left
+	uint16_t devAddr = (0x50 << 1);
+	uint16_t memAddr = 0x0100;
+	HAL_StatusTypeDef status;
+
+	HAL_I2C_Mem_Write(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
+			(uint8_t*) wmsg, sizeof(wmsg), HAL_MAX_DELAY);
+
+	for (;;) {
+		status = HAL_I2C_IsDeviceReady(&hi2c1, devAddr, 1,
+		HAL_MAX_DELAY);
+		if (status == HAL_OK)
+			break;
+	}
+
+	HAL_I2C_Mem_Read(&hi2c1, devAddr, memAddr, I2C_MEMADD_SIZE_16BIT,
+			(uint8_t*) rmsg, sizeof(rmsg), HAL_MAX_DELAY);
+
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	counter++;
 
 	if (counter == 1) {
-		//HAL_UART_Receive_DMA(&huart1, rxBuffer, 16);
-		uint8_t str[] = "AT+DMOSETGROUP=0,148.0000,148.0000,0000,4,0000\r\n"; //передача приём
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		//rssiBuf[0]=readRssi();
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 148);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(148, 148);
 	} else if (counter == 2) {
-		uint8_t str[] = "AT+DMOSETGROUP=0,151.0000,151.0000,0000,4,0000\r\n";
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 151);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(151, 151);
 
 	} else if (counter == 3) {
-		uint8_t str[] = "AT+DMOSETGROUP=0,154.0000,154.0000,0000,4,0000\r\n";
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 154);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(154, 154);
 	} else if (counter == 4) {
-		uint8_t str[] = "AT+DMOSETGROUP=0,157.0000,157.0000,0000,4,0000\r\n";
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 157);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(157, 157);
 	} else if (counter == 5) {
-		uint8_t str[] = "AT+DMOSETGROUP=0,160.0000,160.0000,0000,4,0000\r\n";
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 160);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(160, 160);
 	} else if (counter == 6) {
-		uint8_t str[] = "AT+DMOSETGROUP=0,163.0000,163.0000,0000,4,0000\r\n";
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 163);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(163, 163);
 	} else if (counter == 7) {
-		uint8_t str[] = "AT+DMOSETGROUP=0,166.0000,166.0000,0000,4,0000\r\n";
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 166);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(166, 166);
 	} else if (counter == 8) {
-		uint8_t str[] = "AT+DMOSETGROUP=0,169.0000,169.0000,0000,4,0000\r\n";
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 169);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(169, 169);
 	} else if (counter == 9) {
-		uint8_t str[] = "AT+DMOSETGROUP=0,172.0000,172.0000,0000,4,0000\r\n";
-		HAL_UART_Receive_DMA(&huart1, rxBuffer, 16);
-		HAL_UART_Transmit(&huart1, str, strlen(str), 300);
-		delay_200ms();
-		uint8_t str2[] = "RSSI?\r\n";
-		HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-		ssd1306_Fill(Black);
-		ssd1306_SetCursor(0, 0);
-		sprintf(buf, "TxFreq = %d Mhz", 150);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 20);
-
-		sprintf(buf, "RxFreq = %d MHz", 172);
-		ssd1306_WriteString(buf, Font_7x10, White);
-		ssd1306_SetCursor(0, 40);
-
-		ssd1306_UpdateScreen();
+		nextStep(172, 172);
 	} else if (counter == 10) {
 		getRssi();
-		//Вернуть на изначальный канал (вывести результаты уровней, рестар после нажатия на кнопку)
 		counter = 0;
 		counted = 1;
 		HAL_TIM_Base_Stop(&htim14);
@@ -287,7 +199,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 }
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_5) {
-		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+		if (mode < 4)
+			mode++;
+
 		pageNum += 3;
 		if (pageNum == 13)
 			pageNum = 1;
@@ -327,6 +241,30 @@ float calculateFrequency(void) {
 	return frequency;
 }
 
+void drawMenu() {
+	ssd1306_Fill(Black);
+	ssd1306_SetCursor(0, 0);
+	if (mode == 1)
+		sprintf(buf, "* Start: %d Mhz", sfreq);
+	else
+		sprintf(buf, "Start: %d Mhz", sfreq);
+	ssd1306_WriteString(buf, Font_7x10, White);
+	ssd1306_SetCursor(0, 20);
+	if (mode == 2)
+		sprintf(buf, "* Stop: %d MHz", ffreq);
+	else
+		sprintf(buf, "Stop: %d MHz", ffreq);
+	ssd1306_WriteString(buf, Font_7x10, White);
+
+	ssd1306_SetCursor(0, 40);
+	if (mode == 3)
+		sprintf(buf, "* Steps: %d", step);
+	else
+		sprintf(buf, "Steps: %d", step);
+	ssd1306_WriteString(buf, Font_7x10, White);
+
+	ssd1306_UpdateScreen();
+}
 /* USER CODE END 0 */
 
 /**
@@ -361,6 +299,7 @@ int main(void) {
 	MX_USART1_UART_Init();
 	MX_TIM14_Init();
 	MX_ADC1_Init();
+	MX_TIM1_Init();
 	/* USER CODE BEGIN 2 */
 	HAL_UART_Receive_DMA(&huart1, rxBuffer, 300);
 	ssd1306_Init();
@@ -372,7 +311,7 @@ int main(void) {
 	ssd1306_WriteString(buf, Font_7x10, White);
 	ssd1306_SetCursor(0, 20);
 
-	sprintf(buf, "Stop: %d MHz", 173);
+	sprintf(buf, "Stop: %d MHz", 172);
 	ssd1306_WriteString(buf, Font_7x10, White);
 
 	ssd1306_SetCursor(0, 40);
@@ -382,16 +321,39 @@ int main(void) {
 	ssd1306_UpdateScreen();
 
 	uint8_t str[] = "AT+DMOSETGROUP=0,145.0000,145.0000,0000,4,0000\r\n";
-	//uint8_t str[] = "AT+DMOSETGROUP=0,170.0000,150.0000,0000,4,0000\r\n";//передача приём
+
 	HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 	HAL_Delay(200);
-	HAL_ADC_Start_IT(&hadc1);
-
+	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
+	int32_t prevCounter = 0;
+
 	while (1) {
+		if (mode != 4) {
+			drawMenu();
+			int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
+			currCounter = 32767 - ((currCounter - 1) & 0xFFFF) / 2;
+			if (currCounter > 32768 / 2) {
+				currCounter = currCounter - 32768;
+			}
+			if (currCounter != prevCounter) {
+				int32_t delta = currCounter - prevCounter;
+				prevCounter = currCounter;
+				if ((delta > -10) && (delta < 10)) {
+					if (mode == 1) {
+						sfreq += delta;
+					} else if (mode == 2) {
+						ffreq += delta;
+					} else if (mode == 3) {
+						step += delta;
+					}
+				}
+			}
+		}
+		else if (mode == 4)HAL_ADC_Start_IT(&hadc1);
 		if (!counted) {
 			if (sampleCount >= 10000) {
 				int freq = calculateFrequency();
@@ -404,66 +366,59 @@ int main(void) {
 			}
 		} else {
 			if (pageNum == 10) {
-				// Инициализация дисплея
-				ssd1306_Fill(Black);  // Очистка экрана
 
-				// Определение диапазона значений RSSI
+				ssd1306_Fill(Black);
+
 				const int16_t RSSI_MIN = -160;
 				const int8_t RSSI_MAX = -30;
 
-				// Определение размеров дисплея
 				const uint8_t DISPLAY_WIDTH = 128;
 				const uint8_t DISPLAY_HEIGHT = 64;
 
-				// Определение количества значений в буфере
 				size_t rssiBufSize = sizeof(rssiBuf) / sizeof(rssiBuf[0]);
 
-				// Определение шага по оси X
 				const uint8_t STEP_X = (DISPLAY_WIDTH - 1) / (rssiBufSize - 1); // Корректировка шага
 
-				// Определение интервалов для осей
 				const uint8_t AXIS_MARGIN = 10; // Отступ от границы экрана для осей
 
-				// Нарисовать ось X
-				ssd1306_Line(0, DISPLAY_HEIGHT - AXIS_MARGIN-5, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - AXIS_MARGIN-5, White);
+				ssd1306_Line(0, DISPLAY_HEIGHT - AXIS_MARGIN - 5,
+						DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - AXIS_MARGIN - 5,
+						White);
 
-				// Нарисовать ось Y
-				ssd1306_Line(AXIS_MARGIN-8, 0, AXIS_MARGIN-8, DISPLAY_HEIGHT - 1, White);
+				ssd1306_Line(AXIS_MARGIN - 8, 0, AXIS_MARGIN - 8,
+						DISPLAY_HEIGHT - 1, White);
 
-				// Перебор значений из буфера и отрисовка линий между ними
 				for (size_t i = 0; i < rssiBufSize; i++) {
-				    // Вычисление значения RSSI из данных буфера
-				    int rssiValue = (int) (1.113 * rssiBuf[i] - 160);
 
-				    // Нормализация значений RSSI для отображения на дисплее
-				    uint8_t y = (uint8_t) ((rssiValue - RSSI_MIN) * (DISPLAY_HEIGHT - AXIS_MARGIN) / (RSSI_MAX - RSSI_MIN));
-				    y = DISPLAY_HEIGHT - AXIS_MARGIN - y; // Инвертируем значение, чтобы большие RSSI были выше
+					int rssiValue = (int) (1.113 * rssiBuf[i] - 160);
 
-				    // Определение координаты по оси X
-				    uint8_t x = i * STEP_X;
+					uint8_t y = (uint8_t) ((rssiValue - RSSI_MIN)
+							* (DISPLAY_HEIGHT - AXIS_MARGIN)
+							/ (RSSI_MAX - RSSI_MIN));
+					y = DISPLAY_HEIGHT - AXIS_MARGIN - y;
 
-				    // Если не первый элемент, рисуем линию от предыдущего к текущему
-				    if (i > 0) {
-				        int prevRssiValue = (int) (1.113 * rssiBuf[i - 1] - 160);
-				        uint8_t prev_y = (uint8_t) ((prevRssiValue - RSSI_MIN) * (DISPLAY_HEIGHT - AXIS_MARGIN) / (RSSI_MAX - RSSI_MIN));
-				        prev_y = DISPLAY_HEIGHT - AXIS_MARGIN - prev_y; // Инвертируем значение Y для предыдущей точки
+					uint8_t x = i * STEP_X;
 
-				        uint8_t prev_x = (i - 1) * STEP_X;
+					if (i > 0) {
+						int prevRssiValue = (int) (1.113 * rssiBuf[i - 1] - 160);
+						uint8_t prev_y = (uint8_t) ((prevRssiValue - RSSI_MIN)
+								* (DISPLAY_HEIGHT - AXIS_MARGIN)
+								/ (RSSI_MAX - RSSI_MIN));
+						prev_y = DISPLAY_HEIGHT - AXIS_MARGIN - prev_y; // �?нвертируем значение Y для предыдущей точки
 
-				        ssd1306_Line(prev_x, prev_y, x, y, White);
-				    }
+						uint8_t prev_x = (i - 1) * STEP_X;
+
+						ssd1306_Line(prev_x, prev_y, x, y, White);
+					}
 				}
 
-				// Добавление подписей по оси X
 				for (size_t i = 0; i < rssiBufSize; i++) {
-				    uint8_t x = i * STEP_X;
+					uint8_t x = i * STEP_X;
 
-				    // Подпись
-				    // Устанавливаем курсор немного влево от x, но не ниже нижней границы
-				    uint8_t cursorX = (x < 3) ? 0 : (x - 3); // Корректируем значение, если x < 3
-				    ssd1306_SetCursor(cursorX, DISPLAY_HEIGHT - 10); // Устанавливаем курсор на 10 пикселей выше нижней границы дисплея
-				    snprintf(buf, sizeof(buf), "%d", (int) (i + 1)); // Форматируем индекс массива (начиная с 1)
-				    ssd1306_WriteString(buf, Font_7x10, White); // Выводим индекс на дисплей
+					uint8_t cursorX = (x < 3) ? 0 : (x - 3); // Корректируем значение, если x < 3
+					ssd1306_SetCursor(cursorX, DISPLAY_HEIGHT - 10); // Устанавливаем курсор на 10 пикселей выше нижней границы дисплея
+					snprintf(buf, sizeof(buf), "%d", (int) (i + 1)); // Форматируем индекс массива (начиная с 1)
+					ssd1306_WriteString(buf, Font_7x10, White); // Выводим индекс на дисплей
 				}
 
 				// Обновление экрана
@@ -627,6 +582,55 @@ static void MX_I2C1_Init(void) {
 	/* USER CODE BEGIN I2C1_Init 2 */
 
 	/* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+ * @brief TIM1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM1_Init(void) {
+
+	/* USER CODE BEGIN TIM1_Init 0 */
+
+	/* USER CODE END TIM1_Init 0 */
+
+	TIM_Encoder_InitTypeDef sConfig = { 0 };
+	TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+
+	/* USER CODE BEGIN TIM1_Init 1 */
+
+	/* USER CODE END TIM1_Init 1 */
+	htim1.Instance = TIM1;
+	htim1.Init.Prescaler = 0;
+	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim1.Init.Period = 65535;
+	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim1.Init.RepetitionCounter = 0;
+	htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+	sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+	sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+	sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+	sConfig.IC1Filter = 0;
+	sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+	sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+	sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+	sConfig.IC2Filter = 0;
+	if (HAL_TIM_Encoder_Init(&htim1, &sConfig) != HAL_OK) {
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterOutputTrigger2 = TIM_TRGO2_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig)
+			!= HAL_OK) {
+		Error_Handler();
+	}
+	/* USER CODE BEGIN TIM1_Init 2 */
+
+	/* USER CODE END TIM1_Init 2 */
 
 }
 
