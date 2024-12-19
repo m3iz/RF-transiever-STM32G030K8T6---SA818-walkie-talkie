@@ -40,10 +40,11 @@
 #define SSD1306_USE_I2C
 int counter = 0;
 int counted = 0;
+uint8_t pwr = 1;
 int pageNum = 1;
 int rssiBuf[9] = { 0 };
 char buf[1024];
-uint8_t sfreq = 145, ffreq = 172, step = 9, fstep = 3, mode = 0;
+uint8_t sfreq = 145, ffreq = 172, step = 9, fstep = 3, mode = 0; irqm = 0;
 uint8_t rxBuffer[1024];
 /* USER CODE END PD */
 
@@ -189,24 +190,7 @@ void Eeprom_RW(uint8_t rw) {
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	counter++;
 
-	if (counter == 1) {
-		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
-	} else if (counter == 2) {
-		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
-
-	} else if (counter == 3) {
-		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
-	} else if (counter == 4) {
-		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
-	} else if (counter == 5) {
-		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
-	} else if (counter == 6) {
-		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
-	} else if (counter == 7) {
-		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
-	} else if (counter == 8) {
-		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
-	} else if (counter == 9) {
+	if (counter < 10) {
 		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 10) {
 		getRssi();
@@ -214,6 +198,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		counted = 1;
 		HAL_TIM_Base_Stop(&htim14);
 		//HAL_ADC_Start_IT(&hadc1);
+	}
+
+}
+
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
+	if (GPIO_Pin == GPIO_PIN_0) {
+
+		//HAL_GPIO_TogglePin(LCD_GPIO_Port, LCD_Pin);
+		HAL_GPIO_TogglePin(ONF_GPIO_Port, ONF_Pin);
+
 	}
 
 }
@@ -751,17 +745,17 @@ static void MX_GPIO_Init(void) {
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(LCD_GPIO_Port, LCD_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, LCD_Pin | ONF_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(GPIOA, Audio_Tx_Pin | LED_Pin | WP_Pin, GPIO_PIN_RESET);
 
-	/*Configure GPIO pin : LCD_Pin */
-	GPIO_InitStruct.Pin = LCD_Pin;
+	/*Configure GPIO pins : LCD_Pin ONF_Pin */
+	GPIO_InitStruct.Pin = LCD_Pin | ONF_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(LCD_GPIO_Port, &GPIO_InitStruct);
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 	/*Configure GPIO pins : Audio_Tx_Pin LED_Pin WP_Pin */
 	GPIO_InitStruct.Pin = Audio_Tx_Pin | LED_Pin | WP_Pin;
@@ -770,6 +764,12 @@ static void MX_GPIO_Init(void) {
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+	/*Configure GPIO pin : PWR_Pin */
+	GPIO_InitStruct.Pin = PWR_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(PWR_GPIO_Port, &GPIO_InitStruct);
+
 	/*Configure GPIO pin : SW_Pin */
 	GPIO_InitStruct.Pin = SW_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -777,6 +777,9 @@ static void MX_GPIO_Init(void) {
 	HAL_GPIO_Init(SW_GPIO_Port, &GPIO_InitStruct);
 
 	/* EXTI interrupt init*/
+	HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
+
 	HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
