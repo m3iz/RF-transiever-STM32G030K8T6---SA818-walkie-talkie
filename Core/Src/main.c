@@ -44,8 +44,10 @@ uint8_t pwr = 1;
 int pageNum = 1;
 int rssiBuf[9] = { 0 };
 char buf[1024];
-uint8_t sfreq = 145, ffreq = 172, step = 9, fstep = 3, mode = 0; irqm = 0;
+uint8_t sfreq = 145, ffreq = 172, step = 9, fstep = 3, mode = 0;
+irqm = 0;
 uint8_t rxBuffer[1024];
+volatile uint8_t enterSleepMode = 1;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -205,8 +207,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == GPIO_PIN_0) {
 
-		//HAL_GPIO_TogglePin(LCD_GPIO_Port, LCD_Pin);
+		HAL_GPIO_TogglePin(LCD_GPIO_Port, LCD_Pin);
 		HAL_GPIO_TogglePin(ONF_GPIO_Port, ONF_Pin);
+		huart1.Instance->CR1 = 0x0U;
+		irqm++;
+		//HAL_SuspendTick();
+		//HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+
+		//enterSleepMode++;
+		//enterLowPowerMode();
 
 	}
 
@@ -281,6 +290,18 @@ void drawMenu() {
 
 	ssd1306_UpdateScreen();
 }
+
+void enterLowPowerMode(void) {
+	// Включаем глобальные прерывания
+
+	if (enterSleepMode) {
+		// Переводим в Sleep Mode
+		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	} else {
+		// Переводим в Stop Mode (более глубокий режим энергосбережения)
+		HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -332,6 +353,13 @@ int main(void) {
 	int32_t prevCounter = 0;
 
 	while (1) {
+		if (irqm == 2) {
+			irqm = 0;
+			MX_USART1_UART_Init();
+			ssd1306_Init();
+			drawMenu();
+
+		}
 		if (mode < 4) {
 			drawMenu();
 			int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
