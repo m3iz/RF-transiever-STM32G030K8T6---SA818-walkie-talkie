@@ -348,6 +348,7 @@ int main(void)
 	HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 	HAL_Delay(200);
 	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+	HAL_GPIO_TogglePin(ONF1_GPIO_Port, ONF1_Pin);
   /* USER CODE END 2 */
 
   /* Infinite loop */
