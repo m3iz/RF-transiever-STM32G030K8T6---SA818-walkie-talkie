@@ -49,6 +49,7 @@ Mcu.Name=STM32G030K(6-8)Tx
 Mcu.Package=LQFP32
 Mcu.Pin0=PB9
 Mcu.Pin1=PA0
+<<<<<<< HEAD
 Mcu.Pin10=PB3
 Mcu.Pin11=PB5
 Mcu.Pin12=PB6
@@ -64,6 +65,22 @@ Mcu.Pin7=PA8
 Mcu.Pin8=PA9
 Mcu.Pin9=PA10
 Mcu.PinsNb=16
+=======
+Mcu.Pin10=PB5
+Mcu.Pin11=PB6
+Mcu.Pin12=PB7
+Mcu.Pin13=VP_SYS_VS_Systick
+Mcu.Pin14=VP_TIM14_VS_ClockSourceINT
+Mcu.Pin2=PA1
+Mcu.Pin3=PA4
+Mcu.Pin4=PA7
+Mcu.Pin5=PB1
+Mcu.Pin6=PA8
+Mcu.Pin7=PA9
+Mcu.Pin8=PA10
+Mcu.Pin9=PB3
+Mcu.PinsNb=15
+>>>>>>> 631fa00 (sleep mode need check)
 Mcu.ThirdPartyNb=0
 Mcu.UserConstants=
 Mcu.UserName=STM32G030K6Tx
@@ -103,6 +120,7 @@ PA7.Signal=GPIO_Output
 PA8.Signal=S_TIM1_CH1
 PA9.Mode=I2C
 PA9.Signal=I2C1_SCL
+<<<<<<< HEAD
 PB0.GPIOParameters=GPIO_Label,GPIO_ModeDefaultEXTI
 PB0.GPIO_Label=PWR
 PB0.GPIO_ModeDefaultEXTI=GPIO_MODE_IT_RISING
@@ -110,6 +128,10 @@ PB0.Locked=true
 PB0.Signal=GPXTI0
 PB1.GPIOParameters=GPIO_Label
 PB1.GPIO_Label=ONF
+=======
+PB1.GPIOParameters=GPIO_Label
+PB1.GPIO_Label=ONF1
+>>>>>>> 631fa00 (sleep mode need check)
 PB1.Locked=true
 PB1.Signal=GPIO_Output
 PB3.Signal=S_TIM1_CH2
