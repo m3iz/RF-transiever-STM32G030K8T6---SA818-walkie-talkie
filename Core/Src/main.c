@@ -40,15 +40,11 @@
 #define SSD1306_USE_I2C
 int counter = 0;
 int counted = 0;
-uint8_t pwr = 1;
 int pageNum = 1;
-int DC_state = 0;
 int rssiBuf[9] = { 0 };
 char buf[1024];
 uint8_t sfreq = 145, ffreq = 172, step = 9, fstep = 3, mode = 0;
-irqm = 0;
 uint8_t rxBuffer[1024];
-volatile uint8_t enterSleepMode = 1;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -131,20 +127,22 @@ void nextStep(int txfreq, int rxfreq) {
 	delay_200ms();
 	uint8_t str2[] = "RSSI?\r\n";
 	HAL_UART_Transmit(&huart1, str2, strlen(str2), 300);
-	/*ssd1306_Fill(Black);
-	 ssd1306_SetCursor(0, 0);
-	 sprintf(buf, "TxFreq = %d Mhz", txfreq);
-	 ssd1306_WriteString(buf, Font_7x10, White);
-	 ssd1306_SetCursor(0, 20);
+	ssd1306_Fill(Black);
+	ssd1306_SetCursor(0, 0);
+	sprintf(buf, "TxFreq = %d Mhz", txfreq);
+	ssd1306_WriteString(buf, Font_7x10, White);
+	ssd1306_SetCursor(0, 20);
 
-	 sprintf(buf, "RxFreq = %d MHz", rxfreq);
-	 ssd1306_WriteString(buf, Font_7x10, White);
-	 ssd1306_SetCursor(0, 40);
+	sprintf(buf, "RxFreq = %d MHz", rxfreq);
+	ssd1306_WriteString(buf, Font_7x10, White);
+	ssd1306_SetCursor(0, 40);
 
-	 ssd1306_UpdateScreen();*/
+	ssd1306_UpdateScreen();
 }
 
 void Eeprom_RW(uint8_t rw) {
+//const char wmsg[] = "Some data";
+	//char rmsg[sizeof(wmsg)];
 	if (rw == 1) {
 		uint16_t wmsg[3];
 		wmsg[0] = sfreq;
@@ -193,31 +191,31 @@ void Eeprom_RW(uint8_t rw) {
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	counter++;
 
-	if (counter < 10) {
+	if (counter == 1) {
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
+	} else if (counter == 2) {
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
+
+	} else if (counter == 3) {
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
+	} else if (counter == 4) {
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
+	} else if (counter == 5) {
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
+	} else if (counter == 6) {
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
+	} else if (counter == 7) {
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
+	} else if (counter == 8) {
+		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
+	} else if (counter == 9) {
 		nextStep(sfreq + counter * fstep, sfreq + counter * fstep);
 	} else if (counter == 10) {
 		getRssi();
 		counter = 0;
 		counted = 1;
 		HAL_TIM_Base_Stop(&htim14);
-		//HAL_ADC_Start_IT(&hadc1);
-	}
-
-}
-
-void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == GPIO_PIN_0) {
-
-		HAL_GPIO_TogglePin(LCD_GPIO_Port, LCD_Pin);
-		HAL_GPIO_TogglePin(ONF_GPIO_Port, ONF_Pin);
-		huart1.Instance->CR1 = 0x0U;
-		irqm++;
-		//HAL_SuspendTick();
-		//HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-
-		//enterSleepMode++;
-		//enterLowPowerMode();
-
+		HAL_ADC_Start_IT(&hadc1);
 	}
 
 }
@@ -291,18 +289,6 @@ void drawMenu() {
 
 	ssd1306_UpdateScreen();
 }
-
-void enterLowPowerMode(void) {
-	// Включаем глобальные прерывания
-
-	if (enterSleepMode) {
-		// Переводим в Sleep Mode
-		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-	} else {
-		// Переводим в Stop Mode (более глубокий режим энергосбережения)
-		HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
-	}
-}
 /* USER CODE END 0 */
 
 /**
@@ -340,6 +326,9 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+	HAL_GPIO_WritePin(On_GPIO_Port, On_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(PTT_GPIO_Port, PTT_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(OE_GPIO_Port, OE_Pin, GPIO_PIN_SET);
 	HAL_UART_Receive_DMA(&huart1, rxBuffer, 300);
 	ssd1306_Init();
 	Eeprom_RW(0);
@@ -348,7 +337,6 @@ int main(void)
 	HAL_UART_Transmit(&huart1, str, strlen(str), 300);
 	HAL_Delay(200);
 	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-	HAL_GPIO_TogglePin(ONF1_GPIO_Port, ONF1_Pin);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -356,13 +344,6 @@ int main(void)
 	int32_t prevCounter = 0;
 
 	while (1) {
-		if (irqm == 2) {
-			irqm = 0;
-			MX_USART1_UART_Init();
-			ssd1306_Init();
-			drawMenu();
-
-		}
 		if (mode < 4) {
 			drawMenu();
 			int32_t currCounter = __HAL_TIM_GET_COUNTER(&htim1);
@@ -385,11 +366,6 @@ int main(void)
 			}
 		} else if (mode == 4) {
 			fstep = (ffreq - sfreq) / step;
-			if (DC_state == 0) {
-				HAL_GPIO_TogglePin(ONF1_GPIO_Port, ONF1_Pin);
-				DC_state = 1;
-			}
-
 			HAL_ADC_Start_IT(&hadc1);
 		}
 		if (!counted) {
@@ -398,78 +374,16 @@ int main(void)
 				sampleCount = 0;
 				zeroCrossings = 0;
 				if ((freq > FREQ - 5) && (freq < FREQ + 5)) {
-					ssd1306_Fill(Black);
-					ssd1306_SetCursor(0, 0);
-					sprintf(buf, "Analyzing...");
-					ssd1306_WriteString(buf, Font_7x10, White);
-					ssd1306_UpdateScreen();
+					//HAL_Delay(50);
 					HAL_TIM_Base_Start_IT(&htim14);
 				} else
 					HAL_ADC_Start_IT(&hadc1);
 			}
 		} else {
-			if (DC_state == 1) {
-				HAL_GPIO_TogglePin(ONF1_GPIO_Port, ONF1_Pin);
-				DC_state = 0;
-			}
+
 			if (pageNum == 10) {
 
-				ssd1306_Fill(Black);
-
-				const int16_t RSSI_MIN = -160;
-				const int8_t RSSI_MAX = -30;
-
-				const uint8_t DISPLAY_WIDTH = 128;
-				const uint8_t DISPLAY_HEIGHT = 64;
-
-				size_t rssiBufSize = sizeof(rssiBuf) / sizeof(rssiBuf[0]);
-
-				const uint8_t STEP_X = (DISPLAY_WIDTH - 1) / (rssiBufSize - 1); // Корректировка шага
-
-				const uint8_t AXIS_MARGIN = 10; // Отступ от границы экрана для осей
-
-				ssd1306_Line(0, DISPLAY_HEIGHT - AXIS_MARGIN - 5,
-						DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - AXIS_MARGIN - 5,
-						White);
-
-				ssd1306_Line(AXIS_MARGIN - 8, 0, AXIS_MARGIN - 8,
-						DISPLAY_HEIGHT - 1, White);
-
-				for (size_t i = 0; i < rssiBufSize; i++) {
-
-					int rssiValue = (int) (1.113 * rssiBuf[i] - 160);
-
-					uint8_t y = (uint8_t) ((rssiValue - RSSI_MIN)
-							* (DISPLAY_HEIGHT - AXIS_MARGIN)
-							/ (RSSI_MAX - RSSI_MIN));
-					y = DISPLAY_HEIGHT - AXIS_MARGIN - y;
-
-					uint8_t x = i * STEP_X;
-
-					if (i > 0) {
-						int prevRssiValue = (int) (1.113 * rssiBuf[i - 1] - 160);
-						uint8_t prev_y = (uint8_t) ((prevRssiValue - RSSI_MIN)
-								* (DISPLAY_HEIGHT - AXIS_MARGIN)
-								/ (RSSI_MAX - RSSI_MIN));
-						prev_y = DISPLAY_HEIGHT - AXIS_MARGIN - prev_y; // �?нвертируем значение Y для предыдущей точки
-
-						uint8_t prev_x = (i - 1) * STEP_X;
-
-						ssd1306_Line(prev_x, prev_y, x, y, White);
-					}
-				}
-
-				for (size_t i = 0; i < rssiBufSize; i++) {
-					uint8_t x = i * STEP_X;
-
-					uint8_t cursorX = (x < 3) ? 0 : (x - 3); // Корректируем значение, если x < 3
-					ssd1306_SetCursor(cursorX, DISPLAY_HEIGHT - 10); // Устанавливаем курсор на 10 пикселей выше нижней границы дисплея
-					snprintf(buf, sizeof(buf), "%d", (int) (i + 1)); // Форматируем индекс массива (начиная с 1)
-					ssd1306_WriteString(buf, Font_7x10, White); // Выводим индекс на дисплей
-				}
-
-				// Обновление экрана
-				ssd1306_UpdateScreen();
+				;
 
 			} else {
 				ssd1306_Fill(Black);
@@ -487,6 +401,7 @@ int main(void)
 				ssd1306_WriteString(buf, Font_7x10, White);
 				ssd1306_UpdateScreen();
 			}
+
 		}
     /* USER CODE END WHILE */
 
@@ -803,20 +718,20 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LCD_Pin|ONF1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LCD_Pin|On_Pin|OE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, Audio_Tx_Pin|LED_Pin|WP_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, Audio_Tx_Pin|PTT_Pin|LED_Pin|WP_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : LCD_Pin ONF1_Pin */
-  GPIO_InitStruct.Pin = LCD_Pin|ONF1_Pin;
+  /*Configure GPIO pins : LCD_Pin On_Pin OE_Pin */
+  GPIO_InitStruct.Pin = LCD_Pin|On_Pin|OE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Audio_Tx_Pin LED_Pin WP_Pin */
-  GPIO_InitStruct.Pin = Audio_Tx_Pin|LED_Pin|WP_Pin;
+  /*Configure GPIO pins : Audio_Tx_Pin PTT_Pin LED_Pin WP_Pin */
+  GPIO_InitStruct.Pin = Audio_Tx_Pin|PTT_Pin|LED_Pin|WP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
